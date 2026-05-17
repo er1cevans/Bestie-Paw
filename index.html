@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bestie Paw — 你和宠物最好的伴侣</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #FFF8F5 0%, #F0FAF5 100%);
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--primary-lt);
+      color: var(--primary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.3rem 0.9rem;
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .hero-title {
+      font-size: 2.75rem;
+      font-weight: 800;
+      line-height: 1.18;
+      color: var(--text);
+      margin-bottom: 1rem;
+      letter-spacing: -1px;
+    }
+    .hero-title em {
+      color: var(--primary);
+      font-style: normal;
+    }
+    .hero-sub {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      margin: 0 auto 2.25rem;
+      line-height: 1.7;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .hero-stat {
+      display: flex;
+      gap: 2.5rem;
+      justify-content: center;
+      margin-top: 3rem;
+      flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; }
+    .stat-num { font-size: 1.75rem; font-weight: 800; color: var(--text); }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem; }
+
+    /* Feature icons */
+    .icon-health   { background: #FFF0ED; }
+    .icon-community { background: #F0FAF5; }
+    .icon-ai       { background: #F0EDFE; }
+
+    /* Placeholder banner */
+    .placeholder-banner {
+      background: var(--surface);
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* How it works */
+    .how-section { background: var(--white); }
+    .flow-steps {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 0;
+      max-width: 700px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+    }
+    .flow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      flex: 1;
+      min-width: 140px;
+      padding: 0 0.5rem;
+    }
+    .flow-num {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--primary-lt);
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+    }
+    .flow-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .flow-desc  { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
+    .flow-arrow {
+      color: var(--border);
+      font-size: 1.2rem;
+      padding-top: 0.6rem;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 640px) {
+      .hero-title { font-size: 1.9rem; }
+      .flow-arrow { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== 导航栏 ===== -->
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">Bestie<span>Paw</span> 🐾</a>
+    <ul class="nav-links">
+      <li><a href="#features">功能</a></li>
+      <li><a href="#how">如何使用</a></li>
+      <li><a href="#">社区</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="register.html" class="btn btn-ghost">注册</a>
+      <a href="register.html" class="btn btn-primary">免费开始</a>
+    </div>
+  </nav>
+
+  <!-- ===== Hero ===== -->
+  <section class="hero">
+    <div class="hero-eyebrow">🐶 专为宠物主人打造</div>
+    <h1 class="hero-title">
+      你和宠物的<br><em>全能生活助手</em>
+    </h1>
+    <p class="hero-sub">健康档案、社区交流、AI 智能分析，一站式满足宠物主人的所有需求。</p>
+    <div class="hero-actions">
+      <a href="register.html" class="btn btn-primary btn-lg">立即注册 →</a>
+      <a href="#features" class="btn btn-outline btn-lg">了解功能</a>
+    </div>
+    <div class="hero-stat">
+      <div class="stat-item">
+        <div class="stat-num">10万+</div>
+        <div class="stat-label">注册宠物主</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">30万+</div>
+        <div class="stat-label">宠物健康档案</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">98%</div>
+        <div class="stat-label">用户满意度</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 核心功能模块 ===== -->
+  <section class="section" id="features">
+    <div class="section-center">
+      <span class="section-label">FEATURES</span>
+      <h2 class="section-title">三大核心能力，守护毛孩子每一天</h2>
+      <p class="section-sub">从健康管理到社交互动，Bestie Paw 让养宠变得轻松又有趣。</p>
+    </div>
+
+    <div class="feature-grid">
+
+      <!-- 健康管理 -->
+      <a href="#" class="feature-card">
+        <div class="feature-icon icon-health">🏥</div>
+        <div class="feature-title">健康管理</div>
+        <p class="feature-desc">
+          记录疫苗接种、体检报告、用药计划，自动提醒定期复诊，生成完整健康档案可随时导出。
+        </p>
+        <div class="placeholder-banner">🚧 模块开发中 — 敬请期待</div>
+      </a>
+
+      <!-- 社区社交 -->
+      <a href="#" class="feature-card">
+        <div class="feature-icon icon-community">🐾</div>
+        <div class="feature-title">社区社交</div>
+        <p class="feature-desc">
+          和同城宠物主互动，发布宠物日记，分享养宠经验，还能发布走失/领养信息。
+        </p>
+        <div class="placeholder-banner">🚧 模块开发中 — 敬请期待</div>
+      </a>
+
+      <!-- AI 核心能力 -->
+      <a href="#" class="feature-card">
+        <div class="feature-icon icon-ai">🤖</div>
+        <div class="feature-title">AI 智能助手</div>
+        <p class="feature-desc">
+          上传照片自动识别品种年龄，描述症状获取初步分析，7×24h 智能客服随时在线答疑。
+        </p>
+        <div class="placeholder-banner">🚧 模块开发中 — 敬请期待</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ===== 如何使用 ===== -->
+  <section class="section how-section" id="how">
+    <div class="section-center">
+      <span class="section-label">HOW IT WORKS</span>
+      <h2 class="section-title">三步开始，马上用起来</h2>
+    </div>
+
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-title">创建账号</div>
+        <p class="flow-desc">填写基本信息，30 秒完成注册</p>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-title">登记宠物</div>
+        <p class="flow-desc">上传照片，填写宠物基本档案</p>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-title">畅享功能</div>
+        <p class="flow-desc">解锁健康、社区、AI 全功能</p>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-top: 2.5rem;">
+      <a href="register.html" class="btn btn-primary btn-lg">马上开始 →</a>
+    </div>
+  </section>
+
+  <!-- ===== 页脚 ===== -->
+  <footer class="footer">
+    <p>© 2026 Bestie Paw. 让每只毛孩子都被好好爱着 🐾</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -7,10 +7,13 @@
     "strict": true,
     "esModuleInterop": true,
     "moduleResolution": "node16",
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
+  },
+  "ts-node": {
+    "files": true
   },
   "include": ["src", "prisma/seed.ts"]
 }

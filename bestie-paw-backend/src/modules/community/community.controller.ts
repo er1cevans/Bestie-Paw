@@ -9,7 +9,8 @@ import {
   deletePost,
   getPost,
   likePost,
-  listPosts
+  listPosts,
+  unlikePost
 } from './community.service';
 
 const createPostSchema = z.object({
@@ -73,6 +74,15 @@ export const deletePostHandler = async (
 export const likePostHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await likePost(req.params.postId, req.user!.userId);
+    return sendSuccess(res, data);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const unlikePostHandler = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await unlikePost(req.params.postId, req.user!.userId);
     return sendSuccess(res, data);
   } catch (err) {
     return next(err);

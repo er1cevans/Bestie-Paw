@@ -169,6 +169,7 @@ function AppShell({ children, currentRoute }) {
 // ---- Dashboard Overview ----
 function DashboardPage() {
   const t = useT();
+  const { lang } = useLang();
   const { user } = useAuth();
   const { navigate } = useRouter();
   const [pets, setPets] = useState([]);
@@ -205,7 +206,7 @@ function DashboardPage() {
           {t.dash.hello}, {user?.username || 'PetLover'} 👋
         </h1>
         <p style={{ color: 'var(--text-2)', fontSize: '0.9rem' }}>
-          {new Date().toLocaleDateString(useLang().lang === 'zh' ? 'zh-CN' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          {new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
       </div>
 
@@ -222,7 +223,7 @@ function DashboardPage() {
         {pets.length === 0 ? (
           <BPEmpty icon={<PawDots size={80} />} title={t.dash.noPets} description={t.dash.noPetsDesc} />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260, 1fr))', gap: '1rem' }} className="bp-pet-grid">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }} className="bp-pet-grid">
             {pets.map(pet => (
               <div key={pet.id} onClick={() => navigate(`/app/health?pet=${pet.id}`)} style={{
                 background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 18,

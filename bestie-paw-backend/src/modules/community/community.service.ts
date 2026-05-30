@@ -14,16 +14,21 @@ export const listPosts = async (page = 1, limit = 20) => {
   const safePage = Math.max(1, page);
   const safeLimit = Math.min(50, Math.max(1, limit));
 
-  return prisma.post.findMany({
-    orderBy: { createdAt: 'desc' },
-    skip: (safePage - 1) * safeLimit,
-    take: safeLimit,
-    include: {
-      author: {
-        select: { id: true, username: true, avatarUrl: true }
+  const [posts, total] = await prisma.$transaction([
+    prisma.post.findMany({
+      orderBy: { createdAt: 'desc' },
+      skip: (safePage - 1) * safeLimit,
+      take: safeLimit,
+      include: {
+        author: {
+          select: { id: true, username: true, avatarUrl: true }
+        }
       }
-    }
-  });
+    }),
+    prisma.post.count()
+  ]);
+
+  return { posts, total, page: safePage, limit: safeLimit };
 };
 
 export const createPost = async (authorId: string, content: string, images: string[]) =>
@@ -39,7 +44,12 @@ export const getPost = async (postId: string) => {
   const post = await prisma.post.findUnique({
     where: { id: postId },
     include: {
-      comments: { orderBy: { createdAt: 'desc' } },
+      comments: {
+        orderBy: { createdAt: 'asc' },
+        include: {
+          author: { select: { id: true, username: true, avatarUrl: true } }
+        }
+      },
       author: { select: { id: true, username: true, avatarUrl: true } }
     }
   });
@@ -78,6 +88,28 @@ export const likePost = async (postId: string, userId: string) => {
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
       return { liked: false };
+    }
+
+    throw err;
+  }
+};
+
+export const unlikePost = async (postId: string, userId: string) => {
+  await assertPost(postId);
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.postLike.delete({ where: { postId_userId: { postId, userId } } });
+      await tx.post.update({
+        where: { id: postId },
+        data: { likes: { decrement: 1 } }
+      });
+    });
+
+    return { liked: false };
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+      return { liked: false }; // already not liked
     }
 
     throw err;

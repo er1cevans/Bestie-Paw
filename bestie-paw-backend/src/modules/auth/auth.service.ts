@@ -225,6 +225,25 @@ export const verifyEmail = async (input: VerifyEmailInput) => {
   });
 };
 
+export const resendVerificationEmail = async (email: string) => {
+  const user = await prisma.user.findFirst({
+    where: { email, deletedAt: null, emailVerified: false }
+  });
+  if (!user) return; // silent — don't leak whether email exists
+
+  const code = generateVerificationCode();
+  const codeHash = await hashValue(code);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerificationCodeHash: codeHash,
+      emailVerificationExpiresAt: new Date(Date.now() + 10 * 60 * 1000)
+    }
+  });
+
+  await sendVerificationEmail(email, code);
+};
+
 export const requestPasswordReset = async (email: string) => {
   const user = await prisma.user.findFirst({
     where: { email, deletedAt: null }

@@ -42,10 +42,14 @@ const parseDurationMs = (value: string): number => {
 };
 
 export const signAccessToken = (payload: AccessTokenPayload) =>
-  jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: env.JWT_ACCESS_EXPIRES_IN });
+  jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+    expiresIn: env.JWT_ACCESS_EXPIRES_IN
+  } as jwt.SignOptions);
 
 export const signRefreshToken = (payload: RefreshTokenPayload) =>
-  jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: env.JWT_REFRESH_EXPIRES_IN });
+  jwt.sign(payload, env.JWT_REFRESH_SECRET, {
+    expiresIn: env.JWT_REFRESH_EXPIRES_IN
+  } as jwt.SignOptions);
 
 export const verifyAccessToken = (token: string) =>
   jwt.verify(token, env.JWT_ACCESS_SECRET) as AccessTokenPayload;

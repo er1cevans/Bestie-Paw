@@ -4,6 +4,7 @@ import {
   loginSchema,
   refreshSchema,
   registerSchema,
+  resendVerificationSchema,
   resetPasswordSchema,
   verifyEmailSchema
 } from './auth.schema';
@@ -12,6 +13,7 @@ import {
   refreshAccessToken,
   registerUser,
   requestPasswordReset,
+  resendVerificationEmail,
   resetPassword,
   verifyEmail,
   logoutUser
@@ -80,6 +82,22 @@ export const forgotPassword = async (req: Request, res: Response, next: NextFunc
     const input = forgotPasswordSchema.parse(req.body);
     await requestPasswordReset(input.email);
     return sendSuccess(res, { message: 'If the account exists, an email was sent.' });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const resendVerification = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const input = resendVerificationSchema.parse(req.body);
+    await resendVerificationEmail(input.email);
+    return sendSuccess(res, {
+      message: 'If the account exists and is unverified, a new code was sent.'
+    });
   } catch (err) {
     return next(err);
   }

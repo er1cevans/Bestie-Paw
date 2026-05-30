@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { z } from 'zod';
 import { sendSuccess } from '../../utils/response';
 import {
   addHealthAttachments,
@@ -6,10 +7,13 @@ import {
   deleteHealthRecord,
   getHealthRecord,
   listHealthRecords,
+  removeHealthAttachment,
   updateHealthRecord
 } from './health.service';
 import { healthCreateSchema, healthTypeEnum, healthUpdateSchema } from './health.schema';
 import { resolveFileUrl } from '../../middleware/upload';
+
+const removeAttachmentSchema = z.object({ url: z.string().min(1) });
 
 export const listHealthHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -89,6 +93,26 @@ export const uploadHealthAttachmentsHandler = async (
       req.params.petId,
       req.params.recordId,
       urls
+    );
+
+    return sendSuccess(res, data);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const removeHealthAttachmentHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { url } = removeAttachmentSchema.parse(req.body);
+    const data = await removeHealthAttachment(
+      req.user!.userId,
+      req.params.petId,
+      req.params.recordId,
+      url
     );
 
     return sendSuccess(res, data);

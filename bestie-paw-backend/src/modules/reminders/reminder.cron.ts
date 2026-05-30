@@ -11,6 +11,7 @@ export const startReminderCron = () => {
     const reminders = await prisma.reminder.findMany({
       where: {
         notified: false,
+        completedAt: null,
         dueDate: { gte: now, lte: nextDay }
       },
       include: {

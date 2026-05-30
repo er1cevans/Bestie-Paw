@@ -2,6 +2,7 @@ import { prisma } from '../../utils/prisma';
 import { sendMail } from '../../utils/mailer';
 import { env } from '../../config/env';
 import { AppError } from '../../middleware/errorHandler';
+import { deleteUploadedFile } from '../../middleware/upload';
 import type { PetCreateInput, PetUpdateInput } from './pets.schema';
 
 const assertPetOwnership = async (userId: string, petId: string) => {
@@ -125,6 +126,12 @@ export const deletePet = async (userId: string, petId: string) => {
 };
 
 export const updatePetAvatar = async (userId: string, petId: string, avatarUrl: string) => {
-  await assertPetOwnership(userId, petId);
-  return prisma.pet.update({ where: { id: petId }, data: { avatarUrl } });
+  const pet = await assertPetOwnership(userId, petId);
+  const updated = await prisma.pet.update({ where: { id: petId }, data: { avatarUrl } });
+
+  if (pet.avatarUrl && pet.avatarUrl !== avatarUrl) {
+    deleteUploadedFile(pet.avatarUrl);
+  }
+
+  return updated;
 };

@@ -1,5 +1,7 @@
+import { HealthRecordType } from '@prisma/client';
 import { prisma } from '../../utils/prisma';
 import { AppError } from '../../middleware/errorHandler';
+import { deleteUploadedFile } from '../../middleware/upload';
 import type { HealthCreateInput, HealthUpdateInput } from './health.schema';
 
 const assertPetOwnership = async (userId: string, petId: string) => {
@@ -31,7 +33,7 @@ const assertRecordOwnership = async (userId: string, petId: string, recordId: st
 export const listHealthRecords = async (
   userId: string,
   petId: string,
-  type?: string,
+  type?: HealthRecordType,
   page = 1,
   limit = 20
 ) => {
@@ -39,16 +41,19 @@ export const listHealthRecords = async (
 
   const safePage = Math.max(1, page);
   const safeLimit = Math.min(50, Math.max(1, limit));
+  const where = { petId, ...(type ? { type } : {}) };
 
-  return prisma.healthRecord.findMany({
-    where: {
-      petId,
-      ...(type ? { type } : {})
-    },
-    orderBy: { date: 'desc' },
-    skip: (safePage - 1) * safeLimit,
-    take: safeLimit
-  });
+  const [records, total] = await prisma.$transaction([
+    prisma.healthRecord.findMany({
+      where,
+      orderBy: { date: 'desc' },
+      skip: (safePage - 1) * safeLimit,
+      take: safeLimit
+    }),
+    prisma.healthRecord.count({ where })
+  ]);
+
+  return { records, total, page: safePage, limit: safeLimit };
 };
 
 export const createHealthRecord = async (
@@ -111,4 +116,26 @@ export const addHealthAttachments = async (
       }
     }
   });
+};
+
+export const removeHealthAttachment = async (
+  userId: string,
+  petId: string,
+  recordId: string,
+  attachmentUrl: string
+) => {
+  const record = await assertRecordOwnership(userId, petId, recordId);
+
+  if (!record.attachments.includes(attachmentUrl)) {
+    throw new AppError('NOT_FOUND', 'Attachment not found', 404);
+  }
+
+  const updated = await prisma.healthRecord.update({
+    where: { id: recordId },
+    data: { attachments: record.attachments.filter((a) => a !== attachmentUrl) }
+  });
+
+  deleteUploadedFile(attachmentUrl);
+
+  return updated;
 };

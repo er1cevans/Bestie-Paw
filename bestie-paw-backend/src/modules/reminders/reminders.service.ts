@@ -1,4 +1,4 @@
-import { ReminderType } from '@prisma/client';
+import { Prisma, ReminderType } from '@prisma/client';
 import { prisma } from '../../utils/prisma';
 import { AppError } from '../../middleware/errorHandler';
 
@@ -12,7 +12,12 @@ const assertPetOwnership = async (userId: string, petId: string) => {
   }
 };
 
-export const listReminders = async (userId: string, petId: string, upcoming?: boolean) => {
+export const listReminders = async (
+  userId: string,
+  petId: string,
+  upcoming?: boolean,
+  includeCompleted = false
+) => {
   await assertPetOwnership(userId, petId);
 
   const now = new Date();
@@ -21,6 +26,7 @@ export const listReminders = async (userId: string, petId: string, upcoming?: bo
   return prisma.reminder.findMany({
     where: {
       petId,
+      ...(includeCompleted ? {} : { completedAt: null }),
       ...(upcoming ? { dueDate: { gte: now, lte: nextWeek } } : {})
     },
     orderBy: { dueDate: 'asc' }
@@ -71,6 +77,27 @@ export const updateReminder = async (
       dueDate: data.dueDate ? new Date(data.dueDate) : undefined
     }
   });
+};
+
+export const completeReminder = async (
+  userId: string,
+  petId: string,
+  reminderId: string
+) => {
+  await assertPetOwnership(userId, petId);
+
+  try {
+    return await prisma.reminder.update({
+      where: { id: reminderId, petId },
+      data: { completedAt: new Date() }
+    });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+      throw new AppError('NOT_FOUND', 'Reminder not found', 404);
+    }
+
+    throw err;
+  }
 };
 
 export const deleteReminder = async (userId: string, petId: string, reminderId: string) => {

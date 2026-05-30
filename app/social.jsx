@@ -156,14 +156,8 @@ function AIPage() {
     setSending(true);
 
     try {
-      const allMsgs = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
-      const prompt = lang === 'zh'
-        ? `你是 BestiePaw AI 宠物健康助手。用中文回复。基于用户描述的宠物症状给出简要分析和建议。始终提醒用户如有紧急情况需就医。用户问题：${userMsg.content}`
-        : `You are BestiePaw AI pet health assistant. Based on the pet symptoms described, provide brief analysis and advice. Always remind users to seek vet care for emergencies. User: ${userMsg.content}`;
-
-      const reply = await window.claude.complete({
-        messages: [{ role: 'user', content: prompt }],
-      });
+      const history = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
+      const reply = await aiComplete(history, lang);
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch {
       const fallback = lang === 'zh'

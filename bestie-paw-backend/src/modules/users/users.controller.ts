@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 import { sendSuccess } from '../../utils/response';
 import {
+  changePassword,
   getCurrentUser,
   softDeleteUser,
   updateAvatar,
@@ -15,6 +16,11 @@ const updateSchema = z.object({
     (value) => (value === '' ? undefined : value),
     z.string().regex(/^\d{11}$/).optional()
   )
+});
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8).max(72)
 });
 
 export const getMe = async (req: Request, res: Response, next: NextFunction) => {
@@ -49,6 +55,20 @@ export const uploadAvatarHandler = async (
     const url = resolveFileUrl(req.file.filename);
     const data = await updateAvatar(req.user!.userId, url);
     return sendSuccess(res, data);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const changePasswordHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const input = changePasswordSchema.parse(req.body);
+    await changePassword(req.user!.userId, input.currentPassword, input.newPassword);
+    return sendSuccess(res, { message: 'Password changed' });
   } catch (err) {
     return next(err);
   }

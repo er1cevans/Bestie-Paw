@@ -29,6 +29,7 @@ model User {
   posts         Post[]
   refreshTokens RefreshToken[]
   postLikes     PostLike[]
+  comments      Comment[]
 }
 
 model RefreshToken {
@@ -60,6 +61,9 @@ model Pet {
   owner         User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   healthRecords HealthRecord[]
   reminders     Reminder[]
+  weightRecords WeightRecord[]
+
+  @@index([ownerId])
 }
 
 enum PetType {
@@ -116,6 +120,7 @@ model Reminder {
   type        ReminderType
   dueDate     DateTime
   notified    Boolean       @default(false)
+  completedAt DateTime?
   createdAt   DateTime      @default(now())
 
   pet         Pet           @relation(fields: [petId], references: [id], onDelete: Cascade)
@@ -163,4 +168,20 @@ model Comment {
   createdAt DateTime @default(now())
 
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model WeightRecord {
+  id         String   @id @default(cuid())
+  petId      String
+  weightKg   Float
+  note       String?
+  recordedAt DateTime
+  createdAt  DateTime @default(now())
+
+  pet        Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId, recordedAt])
 }

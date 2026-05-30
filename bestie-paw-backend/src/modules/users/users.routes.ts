@@ -1,7 +1,13 @@
 import { Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { avatarUpload } from '../../middleware/upload';
-import { deleteMe, getMe, updateMe, uploadAvatarHandler } from './users.controller';
+import {
+  changePasswordHandler,
+  deleteMe,
+  getMe,
+  updateMe,
+  uploadAvatarHandler
+} from './users.controller';
 
 const router = Router();
 
@@ -22,6 +28,12 @@ router.patch('/me', authMiddleware, updateMe);
  * Upload user avatar. Auth: yes.
  */
 router.post('/me/avatar', authMiddleware, avatarUpload.single('avatar'), uploadAvatarHandler);
+
+/**
+ * POST /api/users/me/password
+ * Change current user password. Auth: yes.
+ */
+router.post('/me/password', authMiddleware, changePasswordHandler);
 
 /**
  * DELETE /api/users/me

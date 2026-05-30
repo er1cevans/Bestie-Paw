@@ -48,7 +48,13 @@ const configureApple = () => {
         callbackURL: env.APPLE_CALLBACK_URL,
         privateKeyPath: env.APPLE_PRIVATE_KEY_PATH
       },
-      (_accessToken: string, _refreshToken: string, _idToken: string, profile: any, done) => {
+      (
+        _accessToken: string,
+        _refreshToken: string,
+        _idToken: string,
+        profile: any,
+        done: (error: Error | null, user?: unknown) => void
+      ) => {
         const email = profile?.email;
         if (!email) {
           return done(new Error('Apple account email not available'));

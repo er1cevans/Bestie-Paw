@@ -11,6 +11,7 @@ import usersRoutes from './modules/users/users.routes';
 import petsRoutes from './modules/pets/pets.routes';
 import healthRoutes from './modules/health/health.routes';
 import remindersRoutes from './modules/reminders/reminders.routes';
+import weightRoutes from './modules/weight/weight.routes';
 import communityRoutes from './modules/community/community.routes';
 import statsRoutes from './modules/stats/stats.routes';
 
@@ -30,6 +31,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/pets', petsRoutes);
 app.use('/api/pets/:petId/health', healthRoutes);
 app.use('/api/pets/:petId/reminders', remindersRoutes);
+app.use('/api/pets/:petId/weight', weightRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/stats', statsRoutes);
 

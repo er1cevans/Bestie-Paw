@@ -1,5 +1,7 @@
 import { prisma } from '../../utils/prisma';
 import { AppError } from '../../middleware/errorHandler';
+import { compareValue, hashValue } from '../../utils/hash';
+import { deleteUploadedFile } from '../../middleware/upload';
 
 const sanitizeUser = (user: {
   id: string;
@@ -47,6 +49,16 @@ export const updateCurrentUser = async (
     }
   }
 
+  if (data.phone) {
+    const phoneExists = await prisma.user.findFirst({
+      where: { phone: data.phone, NOT: { id: userId }, deletedAt: null }
+    });
+
+    if (phoneExists) {
+      throw new AppError('CONFLICT', '该手机号已被使用', 409);
+    }
+  }
+
   const user = await prisma.user.update({
     where: { id: userId },
     data
@@ -55,11 +67,41 @@ export const updateCurrentUser = async (
   return sanitizeUser(user);
 };
 
+export const changePassword = async (
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+) => {
+  const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
+  if (!user) {
+    throw new AppError('NOT_FOUND', 'User not found', 404);
+  }
+
+  const valid = await compareValue(currentPassword, user.passwordHash);
+  if (!valid) {
+    throw new AppError('INVALID_CREDENTIALS', '当前密码错误', 400);
+  }
+
+  const passwordHash = await hashValue(newPassword);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  // Invalidate all sessions after a password change
+  await prisma.refreshToken.deleteMany({ where: { userId } });
+};
+
 export const updateAvatar = async (userId: string, avatarUrl: string) => {
+  const existing = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { avatarUrl: true }
+  });
+
   const user = await prisma.user.update({
     where: { id: userId },
     data: { avatarUrl }
   });
+
+  if (existing?.avatarUrl && existing.avatarUrl !== avatarUrl) {
+    deleteUploadedFile(existing.avatarUrl);
+  }
 
   return sanitizeUser(user);
 };

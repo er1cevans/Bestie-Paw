@@ -52,3 +52,23 @@ export const resolveFileUrl = (filename: string) => {
 
   return `/uploads/${filename}`;
 };
+
+/**
+ * Best-effort removal of a previously uploaded file given its public URL.
+ * Fire-and-forget: never throws, so callers can use it without awaiting.
+ */
+export const deleteUploadedFile = (fileUrl: string): void => {
+  try {
+    const base = env.UPLOAD_PUBLIC_BASE_URL
+      ? `${env.UPLOAD_PUBLIC_BASE_URL.replace(/\/$/, '')}/`
+      : '/uploads/';
+    const filename = fileUrl.startsWith(base) ? fileUrl.slice(base.length) : null;
+    if (!filename) return;
+    const fullPath = path.resolve(uploadRoot, filename);
+    // Guard against path traversal: only delete files inside the upload root.
+    if (!fullPath.startsWith(uploadRoot)) return;
+    fs.unlink(fullPath, () => {});
+  } catch {
+    /* ignore */
+  }
+};

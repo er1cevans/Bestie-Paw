@@ -4,6 +4,7 @@ import {
   login,
   refresh,
   register,
+  resendVerification,
   resetPasswordHandler,
   verifyEmailAddress,
   logout
@@ -42,6 +43,12 @@ router.post('/logout', authMiddleware, logout);
  * Verify email with code. Auth: no.
  */
 router.post('/verify-email', verifyEmailAddress);
+
+/**
+ * POST /api/auth/resend-verification
+ * Resend email verification code. Auth: no. Rate-limited.
+ */
+router.post('/resend-verification', registerLimiter, resendVerification);
 
 /**
  * POST /api/auth/forgot-password

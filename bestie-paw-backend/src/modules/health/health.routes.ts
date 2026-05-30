@@ -6,6 +6,7 @@ import {
   deleteHealthHandler,
   getHealthHandler,
   listHealthHandler,
+  removeHealthAttachmentHandler,
   updateHealthHandler,
   uploadHealthAttachmentsHandler
 } from './health.controller';
@@ -52,5 +53,11 @@ router.post(
   attachmentUpload.array('files', 5),
   uploadHealthAttachmentsHandler
 );
+
+/**
+ * DELETE /api/pets/:petId/health/:recordId/attachments
+ * Remove a single attachment from a health record. Auth: yes. Body: { url }.
+ */
+router.delete('/:recordId/attachments', authMiddleware, removeHealthAttachmentHandler);
 
 export default router;

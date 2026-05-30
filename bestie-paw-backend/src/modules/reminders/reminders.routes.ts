@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import {
+  completeReminderHandler,
   createReminderHandler,
   deleteReminderHandler,
   listRemindersHandler,
@@ -26,6 +27,12 @@ router.post('/', authMiddleware, createReminderHandler);
  * Update a reminder. Auth: yes.
  */
 router.patch('/:reminderId', authMiddleware, updateReminderHandler);
+
+/**
+ * POST /api/pets/:petId/reminders/:reminderId/complete
+ * Mark a reminder as completed. Auth: yes.
+ */
+router.post('/:reminderId/complete', authMiddleware, completeReminderHandler);
 
 /**
  * DELETE /api/pets/:petId/reminders/:reminderId

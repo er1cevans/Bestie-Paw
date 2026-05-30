@@ -8,7 +8,8 @@ import {
   deletePostHandler,
   getPostHandler,
   likePostHandler,
-  listPostsHandler
+  listPostsHandler,
+  unlikePostHandler
 } from './community.controller';
 
 const router = Router();
@@ -47,6 +48,12 @@ router.delete('/posts/:postId', authMiddleware, deletePostHandler);
  * Like a post (idempotent). Auth: yes.
  */
 router.post('/posts/:postId/like', authMiddleware, likePostHandler);
+
+/**
+ * DELETE /api/community/posts/:postId/like
+ * Unlike a post (idempotent). Auth: yes.
+ */
+router.delete('/posts/:postId/like', authMiddleware, unlikePostHandler);
 
 /**
  * POST /api/community/posts/:postId/comments

@@ -3,269 +3,183 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bestie Paw — 你和宠物最好的伴侣</title>
-  <meta name="description"
-        content="Bestie Paw — 专为宠物主人打造的全能生活助手。健康档案、社区社交、AI 智能分析，一站式守护毛孩子每一天。" />
-  <meta property="og:title"       content="Bestie Paw — 你和宠物最好的伴侣" />
-  <meta property="og:description" content="健康档案、社区交流、AI 智能分析，一站式满足宠物主人的所有需求。" />
-  <meta property="og:type"        content="website" />
-  <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <title>BestiePaw — 智能宠物生活伴侣</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
   <style>
-    /* Hero */
-    .hero {
-      background: linear-gradient(135deg, #FFF8F5 0%, #F0FAF5 100%);
-      padding: 5rem 2rem 4rem;
-      text-align: center;
+    :root {
+      --font-display: 'Sora', 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif;
+      --font-body: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+
+      --primary: #C05230;
+      --primary-light: #F5E6E0;
+      --secondary: #2B7A5F;
+      --secondary-light: #E3F0EB;
+      --gold: #B8943E;
+      --gold-light: #FDF5E6;
+
+      --bg: #FDFBF7;
+      --surface: #F5F2EC;
+      --surface-2: #EBE7DF;
+      --text: #2A2420;
+      --text-2: #6B6460;
+      --text-3: #9B958F;
+      --border: #E5E0D8;
+
+      --error: #D4382C;
+      --error-light: #FFF5F5;
+
+      --sidebar-bg: #1E1B18;
+      --sidebar-text: #E8E4DE;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
     }
-    .hero-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: var(--primary-lt);
-      color: var(--primary);
-      font-size: 0.8rem;
-      font-weight: 600;
-      padding: 0.3rem 0.9rem;
-      border-radius: 100px;
-      margin-bottom: 1.25rem;
-    }
-    .hero-title {
-      font-size: 2.75rem;
-      font-weight: 800;
-      line-height: 1.18;
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
       color: var(--text);
-      margin-bottom: 1rem;
-      letter-spacing: -1px;
-    }
-    .hero-title em {
-      color: var(--primary);
-      font-style: normal;
-    }
-    .hero-sub {
-      font-size: 1.1rem;
-      color: var(--text-muted);
-      max-width: 520px;
-      margin: 0 auto 2.25rem;
-      line-height: 1.7;
-    }
-    .hero-actions {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    .hero-stat {
-      display: flex;
-      gap: 2.5rem;
-      justify-content: center;
-      margin-top: 3rem;
-      flex-wrap: wrap;
-    }
-    .stat-item { text-align: center; }
-    .stat-num { font-size: 1.75rem; font-weight: 800; color: var(--text); }
-    .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem; }
-
-    /* Feature icons */
-    .icon-health   { background: #FFF0ED; }
-    .icon-community { background: #F0FAF5; }
-    .icon-ai       { background: #F0EDFE; }
-
-    /* Placeholder banner */
-    .placeholder-banner {
-      background: var(--surface);
-      border: 1.5px dashed var(--border);
-      border-radius: var(--radius-md);
-      padding: 1.25rem;
-      margin-top: 1rem;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      text-align: center;
+      background: var(--bg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* How it works */
-    .how-section { background: var(--white); }
-    .flow-steps {
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      gap: 0;
-      max-width: 700px;
-      margin: 0 auto;
-      flex-wrap: wrap;
+    input, button, select, textarea { font-family: inherit; }
+    ::placeholder { color: var(--text-3); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+    /* ---- Animations ---- */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .flow-step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      flex: 1;
-      min-width: 140px;
-      padding: 0 0.5rem;
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
-    .flow-num {
-      width: 44px;
-      height: 44px;
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(40px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes typing {
+      0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+      30% { opacity: 1; transform: scale(1); }
+    }
+
+    .bp-fade-up { opacity: 1; }
+    .bp-fade-up.bp-delay-1 { }
+    .bp-fade-up.bp-delay-2 { }
+    .bp-fade-up.bp-delay-3 { }
+    .bp-modal-in { animation: modalIn 0.25s ease both; }
+    .bp-toast-in { animation: toastIn 0.3s ease both; }
+
+    .bp-spinner {
+      width: 20px; height: 20px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
       border-radius: 50%;
-      background: var(--primary-lt);
-      color: var(--primary);
-      font-weight: 800;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 0.75rem;
-    }
-    .flow-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.3rem; }
-    .flow-desc  { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
-    .flow-arrow {
-      color: var(--border);
-      font-size: 1.2rem;
-      padding-top: 0.6rem;
-      flex-shrink: 0;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
     }
 
-    @media (max-width: 640px) {
-      .hero-title { font-size: 1.9rem; }
-      .flow-arrow { display: none; }
+    .bp-typing {
+      display: flex; gap: 4px; align-items: center; padding: 4px 0;
     }
+    .bp-typing span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--text-3); display: block;
+      animation: typing 1.2s ease-in-out infinite;
+    }
+    .bp-typing span:nth-child(2) { animation-delay: 0.15s; }
+    .bp-typing span:nth-child(3) { animation-delay: 0.3s; }
+
+    /* ---- Hover effects ---- */
+    .bp-btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .bp-btn-secondary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .bp-btn-outline:hover { background: var(--primary-light) !important; }
+    .bp-btn-ghost:hover { border-color: var(--primary) !important; color: var(--primary) !important; }
+    .bp-btn-soft:hover { filter: brightness(0.96); }
+
+    .bp-card-hover:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); transform: translateY(-2px); }
+    .bp-feature-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.08); transform: translateY(-3px); }
+    .bp-action-btn:hover { background: var(--surface) !important; }
+
+    .bp-avatar-upload:hover { border-color: var(--primary) !important; background: var(--primary-light) !important; }
+
+    /* Focus */
+    .bp-btn:focus-visible, button:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 768px) {
+      .bp-nav-links { display: none !important; }
+      .bp-hamburger { display: flex !important; }
+      .bp-hide-mobile { display: none !important; }
+      .bp-feature-grid { grid-template-columns: 1fr !important; }
+      .bp-how-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
+      .bp-dash-grid { grid-template-columns: 1fr !important; }
+      .bp-pet-grid { grid-template-columns: 1fr !important; }
+
+      .bp-sidebar { display: none !important; }
+      .bp-mobile-nav { display: block !important; }
+      .bp-app-main { padding: 1.25rem !important; padding-bottom: 5rem !important; }
+    }
+
+    @media (min-width: 769px) {
+      .bp-mobile-nav { display: none !important; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* ---- Selection ---- */
+    ::selection { background: var(--primary-light); color: var(--primary); }
+
+    /* ---- Print ---- */
+    @media print { .bp-sidebar, .bp-mobile-nav { display: none !important; } }
   </style>
 </head>
 <body>
+  <div id="bp-root"></div>
 
-  <!-- ===== 导航栏 ===== -->
-  <nav class="nav" aria-label="主导航">
-    <a href="index.html" class="nav-logo">Bestie<span>Paw</span> 🐾</a>
-    <ul class="nav-links" id="nav-links">
-      <li><a href="#features">功能</a></li>
-      <li><a href="#how">如何使用</a></li>
-      <li><a href="#features">社区</a></li>
-    </ul>
-    <div class="nav-actions">
-      <button class="nav-hamburger" id="nav-hamburger"
-              aria-label="展开导航菜单" aria-expanded="false"
-              aria-controls="nav-links">
-        <span></span><span></span><span></span>
-      </button>
-      <a href="register.html" class="btn btn-ghost">注册</a>
-      <a href="register.html" class="btn btn-primary">免费开始</a>
-    </div>
-  </nav>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-  <main>
-  <!-- ===== Hero ===== -->
-  <section class="hero">
-    <div class="hero-eyebrow">🐶 专为宠物主人打造</div>
-    <h1 class="hero-title">
-      你和宠物的<br><em>全能生活助手</em>
-    </h1>
-    <p class="hero-sub">健康档案、社区交流、AI 智能分析，一站式满足宠物主人的所有需求。</p>
-    <div class="hero-actions">
-      <a href="register.html" class="btn btn-primary btn-lg">立即注册 →</a>
-      <a href="#features" class="btn btn-outline btn-lg">了解功能</a>
-    </div>
-    <div class="hero-stat">
-      <div class="stat-item">
-        <div class="stat-num">免费</div>
-        <div class="stat-label">核心功能永久免费</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">端对端</div>
-        <div class="stat-label">数据加密存储</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">7×24h</div>
-        <div class="stat-label">AI 智能助手在线</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== 核心功能模块 ===== -->
-  <section class="section" id="features">
-    <div class="section-center">
-      <span class="section-label">FEATURES</span>
-      <h2 class="section-title">三大核心能力，守护毛孩子每一天</h2>
-      <p class="section-sub">从健康管理到社交互动，Bestie Paw 让养宠变得轻松又有趣。</p>
-    </div>
-
-    <div class="feature-grid">
-
-      <!-- 健康管理 -->
-      <a href="#" class="feature-card" aria-disabled="true"
-        onclick="event.preventDefault()">
-        <div class="feature-icon icon-health">🏥</div>
-        <div class="feature-title">健康管理</div>
-        <p class="feature-desc">
-          记录疫苗接种、体检报告、用药计划，自动提醒定期复诊，生成完整健康档案可随时导出。
-        </p>
-        <div class="placeholder-banner">🚧 模块开发中 — 敬请期待</div>
-      </a>
-
-      <!-- 社区社交 -->
-      <a href="#" class="feature-card" aria-disabled="true"
-        onclick="event.preventDefault()">
-        <div class="feature-icon icon-community">🐾</div>
-        <div class="feature-title">社区社交</div>
-        <p class="feature-desc">
-          和同城宠物主互动，发布宠物日记，分享养宠经验，还能发布走失/领养信息。
-        </p>
-        <div class="placeholder-banner">🚧 模块开发中 — 敬请期待</div>
-      </a>
-
-      <!-- AI 核心能力 -->
-      <a href="#" class="feature-card" aria-disabled="true"
-        onclick="event.preventDefault()">
-        <div class="feature-icon icon-ai">🤖</div>
-        <div class="feature-title">AI 智能助手</div>
-        <p class="feature-desc">
-          上传照片自动识别品种年龄，描述症状获取初步分析，7×24h 智能客服随时在线答疑。
-        </p>
-        <div class="placeholder-banner">🚧 模块开发中 — 敬请期待</div>
-      </a>
-
-    </div>
-  </section>
-
-  <!-- ===== 如何使用 ===== -->
-  <section class="section how-section" id="how">
-    <div class="section-center">
-      <span class="section-label">HOW IT WORKS</span>
-      <h2 class="section-title">三步开始，马上用起来</h2>
-    </div>
-
-    <div class="flow-steps">
-      <div class="flow-step">
-        <div class="flow-num">1</div>
-        <div class="flow-title">创建账号</div>
-        <p class="flow-desc">填写基本信息，30 秒完成注册</p>
-      </div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step">
-        <div class="flow-num">2</div>
-        <div class="flow-title">登记宠物</div>
-        <p class="flow-desc">上传照片，填写宠物基本档案</p>
-      </div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step">
-        <div class="flow-num">3</div>
-        <div class="flow-title">畅享功能</div>
-        <p class="flow-desc">解锁健康、社区、AI 全功能</p>
-      </div>
-    </div>
-
-    <div style="text-align:center; margin-top: 2.5rem;">
-      <a href="register.html" class="btn btn-primary btn-lg">马上开始 →</a>
-    </div>
-  </section>
-
-  </main>
-
-  <!-- ===== 页脚 ===== -->
-  <footer class="footer">
-    <p>© 2026 Bestie Paw. 让每只毛孩子都被好好爱着 🐾</p>
-  </footer>
-
-  <script src="js/main.js"></script>
+  <script type="text/babel" src="app/services.jsx"></script>
+  <script type="text/babel" src="app/ui.jsx"></script>
+  <script type="text/babel" src="app/public.jsx"></script>
+  <script type="text/babel" src="app/dashboard.jsx"></script>
+  <script type="text/babel" src="app/health.jsx"></script>
+  <script type="text/babel" src="app/social.jsx"></script>
+  <script type="text/babel" src="app/settings.jsx"></script>
+  <script type="text/babel" src="app/main.jsx"></script>
 </body>
 </html>

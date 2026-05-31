@@ -41,6 +41,14 @@ function RemindersPage() {
     toast.success(lang === 'zh' ? '已删除' : 'Deleted');
   };
 
+  const completeReminder = async (id) => {
+    try {
+      await smartApi.reminders.complete(activePet.id, id);
+      setReminders(r => r.filter(x => x.id !== id));
+      toast.success(lang === 'zh' ? '已标记完成 ✓' : 'Marked done ✓');
+    } catch (err) { toast.error(err.message); }
+  };
+
   const daysUntil = (dateStr) => {
     const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
     if (diff < 0) return lang === 'zh' ? '已过期' : 'Overdue';
@@ -110,9 +118,17 @@ function RemindersPage() {
                   </div>
                   {r.description && <div style={{ fontSize: '0.8rem', color: 'var(--text-2)', marginTop: 4 }}>{r.description}</div>}
                 </div>
-                <button onClick={() => deleteReminder(r.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4, flexShrink: 0 }}>
-                  <Icons.trash style={{ width: 16, height: 16 }} />
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                  <button title={lang === 'zh' ? '标记完成' : 'Mark done'} onClick={() => completeReminder(r.id)} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', color: '#2B7A5F', padding: 5,
+                    borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }} className="bp-action-btn">
+                    <Icons.check style={{ width: 17, height: 17 }} />
+                  </button>
+                  <button title={lang === 'zh' ? '删除' : 'Delete'} onClick={() => deleteReminder(r.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 5 }}>
+                    <Icons.trash style={{ width: 16, height: 16 }} />
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -164,12 +180,16 @@ function AddReminderModal({ open, onClose, petId, onCreated }) {
 function ProfilePage() {
   const t = useT();
   const { lang, setLang } = useLang();
-  const { user, setUser } = useAuth();
+  const { user, setUser, logout } = useAuth();
   const toast = useToast();
-  const [form, setForm] = useState({ username: user?.username || '', email: user?.email || '', phone: '' });
+  const [form, setForm] = useState({ username: user?.username || '', email: user?.email || '', phone: user?.phone || '' });
   const [saving, setSaving] = useState(false);
+  const [pwd, setPwd] = useState({ currentPassword: '', newPassword: '', confirm: '' });
+  const [changingPwd, setChangingPwd] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+  const setP = (k) => (e) => setPwd(f => ({ ...f, [k]: e.target.value }));
 
   const handleSave = async () => {
     setSaving(true);
@@ -179,6 +199,31 @@ function ProfilePage() {
       toast.success(lang === 'zh' ? '已保存' : 'Saved');
     } catch (err) { toast.error(err.message); }
     finally { setSaving(false); }
+  };
+
+  const handleChangePassword = async () => {
+    if (pwd.newPassword.length < 8) { toast.error(lang === 'zh' ? '新密码至少 8 位' : 'New password min 8 chars'); return; }
+    if (pwd.newPassword !== pwd.confirm) { toast.error(lang === 'zh' ? '两次密码不一致' : 'Passwords don\'t match'); return; }
+    setChangingPwd(true);
+    try {
+      await smartApi.users.changePassword({ currentPassword: pwd.currentPassword, newPassword: pwd.newPassword });
+      setPwd({ currentPassword: '', newPassword: '', confirm: '' });
+      toast.success(lang === 'zh' ? '密码已修改' : 'Password changed');
+    } catch (err) { toast.error(err.message); }
+    finally { setChangingPwd(false); }
+  };
+
+  const handleDeleteAccount = async () => {
+    const ok = confirm(lang === 'zh'
+      ? '确定注销账号？所有数据将被永久删除且无法恢复。'
+      : 'Delete your account? All data will be permanently removed and cannot be undone.');
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await smartApi.users.delete();
+      toast.success(lang === 'zh' ? '账号已注销' : 'Account deleted');
+      await logout();
+    } catch (err) { toast.error(err.message); setDeleting(false); }
   };
 
   return (
@@ -208,6 +253,25 @@ function ProfilePage() {
         </div>
       </div>
 
+      {/* Security — change password */}
+      <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 18, padding: '1.5rem', marginBottom: '1.5rem' }}>
+        <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '1.25rem', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Icons.shield style={{ width: 16, height: 16, color: 'var(--text-2)' }} />
+          {lang === 'zh' ? '修改密码' : 'Change Password'}
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <BPInput label={lang === 'zh' ? '当前密码' : 'Current password'} type="password" value={pwd.currentPassword} onChange={setP('currentPassword')} autoComplete="current-password" />
+          <BPInput label={lang === 'zh' ? '新密码' : 'New password'} type="password" value={pwd.newPassword} onChange={setP('newPassword')} placeholder={lang === 'zh' ? '至少 8 位' : 'Min 8 characters'} autoComplete="new-password" />
+          <BPInput label={lang === 'zh' ? '确认新密码' : 'Confirm new password'} type="password" value={pwd.confirm} onChange={setP('confirm')} autoComplete="new-password" />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
+            <BPButton variant="primary" onClick={handleChangePassword} loading={changingPwd}
+              disabled={!pwd.currentPassword || !pwd.newPassword}>
+              {lang === 'zh' ? '更新密码' : 'Update password'}
+            </BPButton>
+          </div>
+        </div>
+      </div>
+
       {/* Language */}
       <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 18, padding: '1.5rem', marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '1rem', fontFamily: 'var(--font-display)' }}>{t.profilePage.langLabel}</h3>
@@ -231,7 +295,7 @@ function ProfilePage() {
         <p style={{ fontSize: '0.82rem', color: 'var(--text-2)', marginBottom: '1rem', lineHeight: 1.5 }}>
           {lang === 'zh' ? '注销账号后所有数据将被永久删除且无法恢复。' : 'Deleting your account permanently removes all data and cannot be undone.'}
         </p>
-        <BPButton variant="danger" size="sm">{t.profilePage.deleteAccount}</BPButton>
+        <BPButton variant="danger" size="sm" onClick={handleDeleteAccount} loading={deleting}>{t.profilePage.deleteAccount}</BPButton>
       </div>
     </div>
   );

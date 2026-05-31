@@ -93,6 +93,15 @@ const _lo = (obj, fields) => {
 };
 const _loList = (arr, fields) => (Array.isArray(arr) ? arr.map((x) => _lo(x, fields)) : arr);
 
+// Resolve a stored upload URL (e.g. "/uploads/x.jpg") against the backend origin,
+// since the frontend (e.g. :4173) and API (e.g. :3000) may differ. Absolute URLs pass through.
+const resolveUpload = (url) => {
+  if (!url) return url;
+  if (/^(https?:|data:|blob:)/.test(url)) return url;
+  const origin = API_BASE.replace(/\/api\/?$/, '');
+  return `${origin}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 const api = {
   auth: {
     register: (d) => apiFetch('/auth/register', { method: 'POST', body: d }),
@@ -105,6 +114,8 @@ const api = {
   users: {
     me: () => apiFetch('/users/me'),
     update: (d) => apiFetch('/users/me', { method: 'PATCH', body: d }),
+    changePassword: (d) => apiFetch('/users/me/password', { method: 'POST', body: d }),
+    delete: () => apiFetch('/users/me', { method: 'DELETE' }),
     uploadAvatar: (file) => {
       const fd = new FormData(); fd.append('avatar', file);
       return fetch(`${API_BASE}/users/me/avatar`, {
@@ -128,12 +139,27 @@ const api = {
     get: (petId, id) => apiFetch(`/pets/${petId}/health/${id}`).then((r) => _lo(r, ['type'])),
     update: (petId, id, d) => apiFetch(`/pets/${petId}/health/${id}`, { method: 'PATCH', body: _up(d, ['type']) }).then((r) => _lo(r, ['type'])),
     delete: (petId, id) => apiFetch(`/pets/${petId}/health/${id}`, { method: 'DELETE' }),
+    uploadAttachments: (petId, recordId, files) => {
+      const fd = new FormData();
+      Array.from(files).forEach((f) => fd.append('files', f));
+      return fetch(`${API_BASE}/pets/${petId}/health/${recordId}/attachments`, {
+        method: 'POST', headers: { Authorization: `Bearer ${tokenStore.access}` }, body: fd,
+      }).then((r) => r.json()).then((j) => (j && j.data ? _lo(j.data, ['type']) : j));
+    },
+    removeAttachment: (petId, recordId, url) =>
+      apiFetch(`/pets/${petId}/health/${recordId}/attachments`, { method: 'DELETE', body: { url } }).then((r) => _lo(r, ['type'])),
   },
   reminders: {
     list: (petId) => apiFetch(`/pets/${petId}/reminders`).then((r) => _loList(r, ['type'])),
     create: (petId, d) => apiFetch(`/pets/${petId}/reminders`, { method: 'POST', body: _up(d, ['type']) }).then((r) => _lo(r, ['type'])),
     update: (petId, id, d) => apiFetch(`/pets/${petId}/reminders/${id}`, { method: 'PATCH', body: _up(d, ['type']) }).then((r) => _lo(r, ['type'])),
+    complete: (petId, id) => apiFetch(`/pets/${petId}/reminders/${id}/complete`, { method: 'POST' }).then((r) => _lo(r, ['type'])),
     delete: (petId, id) => apiFetch(`/pets/${petId}/reminders/${id}`, { method: 'DELETE' }),
+  },
+  weight: {
+    list: (petId) => apiFetch(`/pets/${petId}/weight`),
+    add: (petId, d) => apiFetch(`/pets/${petId}/weight`, { method: 'POST', body: d }),
+    delete: (petId, id) => apiFetch(`/pets/${petId}/weight/${id}`, { method: 'DELETE' }),
   },
   community: {
     posts: (q) => apiFetch(`/community/posts?${new URLSearchParams(q || {})}`).then((r) => r?.posts ?? r),
@@ -141,6 +167,7 @@ const api = {
     getPost: (id) => apiFetch(`/community/posts/${id}`),
     deletePost: (id) => apiFetch(`/community/posts/${id}`, { method: 'DELETE' }),
     like: (id) => apiFetch(`/community/posts/${id}/like`, { method: 'POST' }),
+    unlike: (id) => apiFetch(`/community/posts/${id}/like`, { method: 'DELETE' }),
     comment: (id, d) => apiFetch(`/community/posts/${id}/comments`, { method: 'POST', body: d }),
   },
   stats: () => apiFetch('/stats'),
@@ -163,6 +190,14 @@ const MOCK = {
     { id: 'r1', petId: 'p1', title: '驱虫药', description: '每月体外驱虫', dueDate: '2026-06-15', type: 'medication' },
     { id: 'r2', petId: 'p1', title: '年度体检', description: '预约兽医年度检查', dueDate: '2026-10-05', type: 'checkup' },
     { id: 'r3', petId: 'p2', title: '疫苗加强', description: '猫三联加强针', dueDate: '2026-06-01', type: 'vaccine' },
+  ],
+  weights: [
+    { id: 'w1', petId: 'p1', weightKg: 26.8, note: '', recordedAt: '2025-12-01T00:00:00Z' },
+    { id: 'w2', petId: 'p1', weightKg: 27.5, note: '', recordedAt: '2026-01-15T00:00:00Z' },
+    { id: 'w3', petId: 'p1', weightKg: 28.1, note: '增重，需控制', recordedAt: '2026-03-01T00:00:00Z' },
+    { id: 'w4', petId: 'p1', weightKg: 28.5, note: '', recordedAt: '2026-05-01T00:00:00Z' },
+    { id: 'w5', petId: 'p2', weightKg: 4.0, note: '', recordedAt: '2026-02-01T00:00:00Z' },
+    { id: 'w6', petId: 'p2', weightKg: 4.2, note: '', recordedAt: '2026-05-01T00:00:00Z' },
   ],
   posts: [
     { id: 'c1', authorId: 'u1', content: '今天带豆豆去了海边，玩得超开心！推荐大家周末也带毛孩子出去走走 🏖️', images: [], likes: 24, createdAt: '2026-05-15T10:30:00Z', author: { id: 'u1', username: 'PetLover', avatarUrl: null } },
@@ -200,7 +235,12 @@ const demoApi = {
     },
     logout: async () => { tokenStore.clear(); },
   },
-  users: { me: async () => getDemoState().user },
+  users: {
+    me: async () => getDemoState().user,
+    update: async (d) => { const s = getDemoState(); s.user = { ...s.user, ...d }; saveDemoState(); return s.user; },
+    changePassword: async () => ({ message: 'ok' }),
+    delete: async () => { tokenStore.clear(); return { message: 'ok' }; },
+  },
   pets: {
     list: async () => getDemoState().pets,
     create: async (d) => { const s = getDemoState(); const p = { id: 'p' + Date.now(), ...d, ownerId: 'u1' }; s.pets.push(p); saveDemoState(); return p; },
@@ -212,18 +252,41 @@ const demoApi = {
   },
   health: {
     list: async (petId) => getDemoState().healthRecords.filter(h => h.petId === petId),
-    create: async (petId, d) => { const s = getDemoState(); const h = { id: 'h' + Date.now(), petId, ...d }; s.healthRecords.unshift(h); saveDemoState(); return h; },
+    create: async (petId, d) => { const s = getDemoState(); const h = { id: 'h' + Date.now(), petId, ...d, attachments: [] }; s.healthRecords.unshift(h); saveDemoState(); return h; },
     delete: async (petId, id) => { const s = getDemoState(); s.healthRecords = s.healthRecords.filter(h => h.id !== id); saveDemoState(); },
+    uploadAttachments: async (petId, recordId, files) => {
+      const s = getDemoState(); const h = s.healthRecords.find(x => x.id === recordId);
+      if (h) { h.attachments = [...(h.attachments || []), ...Array.from(files).map(f => URL.createObjectURL(f))]; saveDemoState(); }
+      return h;
+    },
+    removeAttachment: async (petId, recordId, url) => {
+      const s = getDemoState(); const h = s.healthRecords.find(x => x.id === recordId);
+      if (h) { h.attachments = (h.attachments || []).filter(a => a !== url); saveDemoState(); }
+      return h;
+    },
   },
   reminders: {
-    list: async (petId) => getDemoState().reminders.filter(r => r.petId === petId),
+    list: async (petId) => getDemoState().reminders.filter(r => r.petId === petId && !r.completedAt),
     create: async (petId, d) => { const s = getDemoState(); const r = { id: 'r' + Date.now(), petId, ...d }; s.reminders.push(r); saveDemoState(); return r; },
+    complete: async (petId, id) => { const s = getDemoState(); const r = s.reminders.find(x => x.id === id); if (r) r.completedAt = new Date().toISOString(); saveDemoState(); return r; },
     delete: async (petId, id) => { const s = getDemoState(); s.reminders = s.reminders.filter(r => r.id !== id); saveDemoState(); },
+  },
+  weight: {
+    list: async (petId) => getDemoState().weights.filter(w => w.petId === petId).sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt)),
+    add: async (petId, d) => {
+      const s = getDemoState();
+      const w = { id: 'w' + Date.now(), petId, ...d };
+      s.weights.push(w);
+      const pet = s.pets.find(p => p.id === petId); if (pet) pet.weightKg = d.weightKg;
+      saveDemoState(); return w;
+    },
+    delete: async (petId, id) => { const s = getDemoState(); s.weights = s.weights.filter(w => w.id !== id); saveDemoState(); },
   },
   community: {
     posts: async () => getDemoState().posts,
     createPost: async (d) => { const s = getDemoState(); const p = { id: 'c' + Date.now(), authorId: 'u1', ...d, likes: 0, createdAt: new Date().toISOString(), author: s.user }; s.posts.unshift(p); saveDemoState(); return p; },
     like: async (id) => { const s = getDemoState(); const p = s.posts.find(x => x.id === id); if (p) p.likes++; saveDemoState(); return { liked: true }; },
+    unlike: async (id) => { const s = getDemoState(); const p = s.posts.find(x => x.id === id); if (p && p.likes > 0) p.likes--; saveDemoState(); return { liked: false }; },
   },
   stats: async () => ({ registeredUsers: 1247, petProfiles: 2891 }),
 };
@@ -441,7 +504,7 @@ function useRouter() {
 
 // Export to window
 Object.assign(window, {
-  smartApi, api, demoApi, tokenStore, API_BASE, aiComplete,
+  smartApi, api, demoApi, tokenStore, API_BASE, aiComplete, resolveUpload,
   AuthContext, LangContext, ToastContext,
   useAuth, useLang, useT, useToast, useRouter,
   translations, MOCK, getDemoState, checkBackend,

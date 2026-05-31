@@ -24,7 +24,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(defaultLimiter);
 app.use(passport.initialize());
 
-app.use('/uploads', express.static(path.resolve(env.UPLOAD_DIR)));
+// Uploaded files are meant to be embedded by the frontend (a different origin in
+// dev, or a CDN in prod), so relax Helmet's strict same-origin CORP for this path only.
+app.use(
+  '/uploads',
+  (_req, res, next) => {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+  },
+  express.static(path.resolve(env.UPLOAD_DIR))
+);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);

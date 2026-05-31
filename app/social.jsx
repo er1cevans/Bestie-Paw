@@ -13,6 +13,7 @@ function CommunityPage() {
   const [showWrite, setShowWrite] = useState(false);
   const [newPost, setNewPost] = useState('');
   const [posting, setPosting] = useState(false);
+  const [liked, setLiked] = useState({});
 
   useEffect(() => {
     (async () => {
@@ -34,11 +35,19 @@ function CommunityPage() {
     finally { setPosting(false); }
   };
 
-  const handleLike = async (postId) => {
+  const toggleLike = async (postId) => {
+    const isLiked = !!liked[postId];
+    // optimistic update
+    setLiked(m => ({ ...m, [postId]: !isLiked }));
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: Math.max(0, p.likes + (isLiked ? -1 : 1)) } : p));
     try {
-      await smartApi.community.like(postId);
-      setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: p.likes + 1 } : p));
-    } catch {}
+      if (isLiked) await smartApi.community.unlike(postId);
+      else await smartApi.community.like(postId);
+    } catch {
+      // revert on failure
+      setLiked(m => ({ ...m, [postId]: isLiked }));
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: Math.max(0, p.likes + (isLiked ? 1 : -1)) } : p));
+    }
   };
 
   const timeAgo = (dateStr) => {
@@ -104,12 +113,12 @@ function CommunityPage() {
 
               {/* Actions */}
               <div style={{ display: 'flex', gap: '1.5rem', paddingTop: '0.6rem', borderTop: '1px solid var(--border)' }}>
-                <button onClick={() => handleLike(post.id)} style={{
+                <button onClick={() => toggleLike(post.id)} style={{
                   display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none',
-                  cursor: 'pointer', fontSize: '0.8rem', color: 'var(--text-3)', fontFamily: 'inherit',
-                  padding: '0.3rem 0',
+                  cursor: 'pointer', fontSize: '0.8rem', color: liked[post.id] ? 'var(--primary)' : 'var(--text-3)',
+                  fontWeight: liked[post.id] ? 600 : 400, fontFamily: 'inherit', padding: '0.3rem 0', transition: 'color 0.15s',
                 }}>
-                  <Icons.thumbsUp style={{ width: 16, height: 16 }} />
+                  <Icons.thumbsUp style={{ width: 16, height: 16, fill: liked[post.id] ? 'var(--primary)' : 'none' }} />
                   <span>{post.likes} {t.communityPage.likes}</span>
                 </button>
                 <button style={{

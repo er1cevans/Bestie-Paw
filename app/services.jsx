@@ -93,6 +93,15 @@ const _lo = (obj, fields) => {
 };
 const _loList = (arr, fields) => (Array.isArray(arr) ? arr.map((x) => _lo(x, fields)) : arr);
 
+// Resolve a stored upload URL (e.g. "/uploads/x.jpg") against the backend origin,
+// since the frontend (e.g. :4173) and API (e.g. :3000) may differ. Absolute URLs pass through.
+const resolveUpload = (url) => {
+  if (!url) return url;
+  if (/^(https?:|data:|blob:)/.test(url)) return url;
+  const origin = API_BASE.replace(/\/api\/?$/, '');
+  return `${origin}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 const api = {
   auth: {
     register: (d) => apiFetch('/auth/register', { method: 'POST', body: d }),
@@ -130,6 +139,15 @@ const api = {
     get: (petId, id) => apiFetch(`/pets/${petId}/health/${id}`).then((r) => _lo(r, ['type'])),
     update: (petId, id, d) => apiFetch(`/pets/${petId}/health/${id}`, { method: 'PATCH', body: _up(d, ['type']) }).then((r) => _lo(r, ['type'])),
     delete: (petId, id) => apiFetch(`/pets/${petId}/health/${id}`, { method: 'DELETE' }),
+    uploadAttachments: (petId, recordId, files) => {
+      const fd = new FormData();
+      Array.from(files).forEach((f) => fd.append('files', f));
+      return fetch(`${API_BASE}/pets/${petId}/health/${recordId}/attachments`, {
+        method: 'POST', headers: { Authorization: `Bearer ${tokenStore.access}` }, body: fd,
+      }).then((r) => r.json()).then((j) => (j && j.data ? _lo(j.data, ['type']) : j));
+    },
+    removeAttachment: (petId, recordId, url) =>
+      apiFetch(`/pets/${petId}/health/${recordId}/attachments`, { method: 'DELETE', body: { url } }).then((r) => _lo(r, ['type'])),
   },
   reminders: {
     list: (petId) => apiFetch(`/pets/${petId}/reminders`).then((r) => _loList(r, ['type'])),
@@ -234,8 +252,18 @@ const demoApi = {
   },
   health: {
     list: async (petId) => getDemoState().healthRecords.filter(h => h.petId === petId),
-    create: async (petId, d) => { const s = getDemoState(); const h = { id: 'h' + Date.now(), petId, ...d }; s.healthRecords.unshift(h); saveDemoState(); return h; },
+    create: async (petId, d) => { const s = getDemoState(); const h = { id: 'h' + Date.now(), petId, ...d, attachments: [] }; s.healthRecords.unshift(h); saveDemoState(); return h; },
     delete: async (petId, id) => { const s = getDemoState(); s.healthRecords = s.healthRecords.filter(h => h.id !== id); saveDemoState(); },
+    uploadAttachments: async (petId, recordId, files) => {
+      const s = getDemoState(); const h = s.healthRecords.find(x => x.id === recordId);
+      if (h) { h.attachments = [...(h.attachments || []), ...Array.from(files).map(f => URL.createObjectURL(f))]; saveDemoState(); }
+      return h;
+    },
+    removeAttachment: async (petId, recordId, url) => {
+      const s = getDemoState(); const h = s.healthRecords.find(x => x.id === recordId);
+      if (h) { h.attachments = (h.attachments || []).filter(a => a !== url); saveDemoState(); }
+      return h;
+    },
   },
   reminders: {
     list: async (petId) => getDemoState().reminders.filter(r => r.petId === petId && !r.completedAt),
@@ -476,7 +504,7 @@ function useRouter() {
 
 // Export to window
 Object.assign(window, {
-  smartApi, api, demoApi, tokenStore, API_BASE, aiComplete,
+  smartApi, api, demoApi, tokenStore, API_BASE, aiComplete, resolveUpload,
   AuthContext, LangContext, ToastContext,
   useAuth, useLang, useT, useToast, useRouter,
   translations, MOCK, getDemoState, checkBackend,

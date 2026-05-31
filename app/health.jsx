@@ -117,6 +117,8 @@ function HealthPage() {
                   {record.description && (
                     <p style={{ fontSize: '0.84rem', color: 'var(--text-2)', lineHeight: 1.55, marginTop: 6 }}>{record.description}</p>
                   )}
+                  <HealthAttachments petId={activePet.id} record={record} lang={lang}
+                    onUpdate={(upd) => setRecords(rs => rs.map(x => x.id === upd.id ? upd : x))} />
                 </div>
                 <button onClick={async () => {
                   if (confirm(lang === 'zh' ? '确定删除？' : 'Delete?')) {
@@ -337,4 +339,76 @@ function AddWeightModal({ open, onClose, petId, lang, onCreated }) {
   );
 }
 
-Object.assign(window, { HealthPage, AddHealthRecordModal, WeightTrendCard, WeightChart, AddWeightModal });
+// ---- Health Record Attachments ----
+function HealthAttachments({ petId, record, lang, onUpdate }) {
+  const toast = useToast();
+  const fileRef = useRef(null);
+  const [busy, setBusy] = useState(false);
+  const attachments = record.attachments || [];
+
+  const isImage = (url) => /^(blob:|data:image)/.test(url) || /\.(jpe?g|png|webp|gif)(\?|$)/i.test(url);
+  const fileName = (url) => { try { return decodeURIComponent(url.split('/').pop().split('?')[0]); } catch { return 'file'; } };
+
+  const handleFiles = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setBusy(true);
+    try {
+      const updated = await smartApi.health.uploadAttachments(petId, record.id, files);
+      if (updated) onUpdate(updated);
+      toast.success(lang === 'zh' ? '附件已上传' : 'Uploaded');
+    } catch (err) { toast.error(err.message || (lang === 'zh' ? '上传失败' : 'Upload failed')); }
+    finally { setBusy(false); if (fileRef.current) fileRef.current.value = ''; }
+  };
+
+  const handleRemove = async (url) => {
+    if (!confirm(lang === 'zh' ? '删除该附件？' : 'Remove this attachment?')) return;
+    try {
+      const updated = await smartApi.health.removeAttachment(petId, record.id, url);
+      if (updated) onUpdate(updated);
+      toast.success(lang === 'zh' ? '已删除' : 'Removed');
+    } catch (err) { toast.error(err.message); }
+  };
+
+  const tile = { width: 56, height: 56, borderRadius: 10, flexShrink: 0, position: 'relative', overflow: 'hidden' };
+  const delBtn = {
+    position: 'absolute', top: 2, right: 2, width: 18, height: 18, borderRadius: '50%',
+    background: 'rgba(0,0,0,0.55)', border: 'none', cursor: 'pointer', color: '#fff',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+  };
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10, alignItems: 'center' }}>
+      {attachments.map((url) => (
+        <div key={url} style={{ ...tile, border: '1px solid var(--border)', background: 'var(--surface)' }}>
+          {isImage(url) ? (
+            <a href={resolveUpload(url)} target="_blank" rel="noopener noreferrer" style={{ display: 'block', width: '100%', height: '100%' }}>
+              <img src={resolveUpload(url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </a>
+          ) : (
+            <a href={resolveUpload(url)} target="_blank" rel="noopener noreferrer" title={fileName(url)}
+              style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textDecoration: 'none', color: 'var(--text-2)', background: 'var(--bg)' }}>
+              <Icons.image style={{ width: 18, height: 18 }} />
+              <span style={{ fontSize: '0.55rem', fontWeight: 700 }}>{(fileName(url).split('.').pop() || 'FILE').toUpperCase().slice(0, 4)}</span>
+            </a>
+          )}
+          <button onClick={() => handleRemove(url)} style={delBtn} title={lang === 'zh' ? '删除' : 'Remove'}>
+            <Icons.x style={{ width: 11, height: 11 }} />
+          </button>
+        </div>
+      ))}
+
+      {/* Add tile */}
+      <button onClick={() => fileRef.current && fileRef.current.click()} disabled={busy} style={{
+        ...tile, border: '1.5px dashed var(--border)', background: 'transparent', cursor: busy ? 'default' : 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)',
+      }} title={lang === 'zh' ? '添加附件' : 'Add file'}>
+        {busy ? <BPLoading size={18} /> : <Icons.plus style={{ width: 20, height: 20 }} />}
+      </button>
+      <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf"
+        onChange={handleFiles} style={{ display: 'none' }} />
+    </div>
+  );
+}
+
+Object.assign(window, { HealthPage, AddHealthRecordModal, WeightTrendCard, WeightChart, AddWeightModal, HealthAttachments });

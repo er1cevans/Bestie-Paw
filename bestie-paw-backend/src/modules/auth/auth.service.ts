@@ -8,7 +8,7 @@ import {
   verifyPasswordResetToken,
   verifyRefreshToken
 } from '../../utils/jwt';
-import { sendPasswordResetEmail, sendVerificationEmail } from '../../utils/mailer';
+import { emailEnabled, sendPasswordResetEmail, sendVerificationEmail } from '../../utils/mailer';
 import { AppError } from '../../middleware/errorHandler';
 import { env } from '../../config/env';
 import type {
@@ -96,20 +96,28 @@ export const registerUser = async (input: RegisterInput) => {
   const codeHash = await hashValue(code);
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
+  // Dev convenience: when email delivery isn't configured (no SMTP) in a
+  // non-production env, auto-verify so the account is immediately usable.
+  // Production must have SMTP configured and goes through real verification.
+  const autoVerify = !emailEnabled && env.NODE_ENV !== 'production';
+
   const user = await prisma.user.create({
     data: {
       username: input.username,
       email: input.email,
       phone: input.phone,
       passwordHash,
-      emailVerificationCodeHash: codeHash,
-      emailVerificationExpiresAt: expiresAt,
+      emailVerified: autoVerify,
+      emailVerificationCodeHash: autoVerify ? null : codeHash,
+      emailVerificationExpiresAt: autoVerify ? null : expiresAt,
       termsAcceptedAt: new Date(),
       termsVersion: env.TERMS_VERSION
     }
   });
 
-  await sendVerificationEmail(user.email, code);
+  if (!autoVerify) {
+    await sendVerificationEmail(user.email, code);
+  }
 
   const accessToken = signAccessToken({ userId: user.id, email: user.email });
   const refreshToken = signRefreshToken({ userId: user.id });

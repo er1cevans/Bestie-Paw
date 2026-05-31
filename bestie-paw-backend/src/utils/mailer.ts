@@ -4,6 +4,9 @@ import { logger } from './logger';
 
 const smtpConfigured = Boolean(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
 
+/** Whether outbound email is actually deliverable (SMTP configured). */
+export const emailEnabled = smtpConfigured;
+
 const transporter = smtpConfigured
   ? nodemailer.createTransport({
       host: env.SMTP_HOST,

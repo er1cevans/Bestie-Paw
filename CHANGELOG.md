@@ -5,6 +5,14 @@
 
 ## [未发布 / Unreleased]
 
+### 前后端联调 Integration
+打通前端与真实后端（+ Neon）的端到端链路，修复仅在真连后端时才暴露、被 demo 模式掩盖的不匹配：
+- **枚举大小写**：前端的 `api` 适配层在发送时把 `type`/`gender`/`neutered` 转大写、接收时转小写，对齐后端 Prisma 的大写枚举。
+- **分页信封**：适配层自动拆解后端返回的 `{records,total,...}` / `{posts,total,...}`，前端继续按数组消费。
+- **错误解析**：`apiFetch` 改读 `data.error.code/message`（此前读 `data.code` 导致后端错误信息全部丢失），并透传 `fields`。
+- **提醒列表**：去掉默认 `?upcoming=true`，列出全部未完成提醒。
+- **开发期邮箱验证**：非生产环境且未配置 SMTP 时，注册自动验证邮箱，避免登录被卡死（生产仍走真实验证）。
+
 ### 后端 Backend
 
 #### 新增 Added

@@ -66,10 +66,32 @@ async function apiFetch(path, opts = {}) {
       tokenStore.clear();
       window.location.hash = '#/login';
     }
-    throw { code: data.code || 'ERROR', message: data.message || '请求失败', status: res.status };
+    throw {
+      code: data.error?.code || data.code || 'ERROR',
+      message: data.error?.message || data.message || '请求失败',
+      fields: data.error?.fields,
+      status: res.status,
+    };
   }
   return data.data || data;
 }
+
+// ---- Enum case + pagination-envelope adapters (backend uses UPPERCASE enums
+//      and {records}/{posts} envelopes; frontend uses lowercase + bare arrays) ----
+const PET_ENUM_FIELDS = ['type', 'gender', 'neutered'];
+const _up = (obj, fields) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  const o = { ...obj };
+  for (const f of fields) if (typeof o[f] === 'string') o[f] = o[f].toUpperCase();
+  return o;
+};
+const _lo = (obj, fields) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  const o = { ...obj };
+  for (const f of fields) if (typeof o[f] === 'string') o[f] = o[f].toLowerCase();
+  return o;
+};
+const _loList = (arr, fields) => (Array.isArray(arr) ? arr.map((x) => _lo(x, fields)) : arr);
 
 const api = {
   auth: {
@@ -91,27 +113,30 @@ const api = {
     },
   },
   pets: {
-    list: () => apiFetch('/pets'),
-    create: (d) => apiFetch('/pets', { method: 'POST', body: d }),
-    get: (id) => apiFetch(`/pets/${id}`),
-    update: (id, d) => apiFetch(`/pets/${id}`, { method: 'PATCH', body: d }),
+    list: () => apiFetch('/pets').then((r) => _loList(r, PET_ENUM_FIELDS)),
+    create: (d) => apiFetch('/pets', { method: 'POST', body: _up(d, PET_ENUM_FIELDS) }).then((r) => _lo(r, PET_ENUM_FIELDS)),
+    get: (id) => apiFetch(`/pets/${id}`).then((r) => _lo(r, PET_ENUM_FIELDS)),
+    update: (id, d) => apiFetch(`/pets/${id}`, { method: 'PATCH', body: _up(d, PET_ENUM_FIELDS) }).then((r) => _lo(r, PET_ENUM_FIELDS)),
     delete: (id) => apiFetch(`/pets/${id}`, { method: 'DELETE' }),
   },
   health: {
-    list: (petId, q) => apiFetch(`/pets/${petId}/health?${new URLSearchParams(q || {})}`),
-    create: (petId, d) => apiFetch(`/pets/${petId}/health`, { method: 'POST', body: d }),
-    get: (petId, id) => apiFetch(`/pets/${petId}/health/${id}`),
-    update: (petId, id, d) => apiFetch(`/pets/${petId}/health/${id}`, { method: 'PATCH', body: d }),
+    list: (petId, q) => {
+      const qq = q && q.type ? { ...q, type: String(q.type).toUpperCase() } : q;
+      return apiFetch(`/pets/${petId}/health?${new URLSearchParams(qq || {})}`).then((r) => _loList(r?.records ?? r, ['type']));
+    },
+    create: (petId, d) => apiFetch(`/pets/${petId}/health`, { method: 'POST', body: _up(d, ['type']) }).then((r) => _lo(r, ['type'])),
+    get: (petId, id) => apiFetch(`/pets/${petId}/health/${id}`).then((r) => _lo(r, ['type'])),
+    update: (petId, id, d) => apiFetch(`/pets/${petId}/health/${id}`, { method: 'PATCH', body: _up(d, ['type']) }).then((r) => _lo(r, ['type'])),
     delete: (petId, id) => apiFetch(`/pets/${petId}/health/${id}`, { method: 'DELETE' }),
   },
   reminders: {
-    list: (petId) => apiFetch(`/pets/${petId}/reminders?upcoming=true`),
-    create: (petId, d) => apiFetch(`/pets/${petId}/reminders`, { method: 'POST', body: d }),
-    update: (petId, id, d) => apiFetch(`/pets/${petId}/reminders/${id}`, { method: 'PATCH', body: d }),
+    list: (petId) => apiFetch(`/pets/${petId}/reminders`).then((r) => _loList(r, ['type'])),
+    create: (petId, d) => apiFetch(`/pets/${petId}/reminders`, { method: 'POST', body: _up(d, ['type']) }).then((r) => _lo(r, ['type'])),
+    update: (petId, id, d) => apiFetch(`/pets/${petId}/reminders/${id}`, { method: 'PATCH', body: _up(d, ['type']) }).then((r) => _lo(r, ['type'])),
     delete: (petId, id) => apiFetch(`/pets/${petId}/reminders/${id}`, { method: 'DELETE' }),
   },
   community: {
-    posts: (q) => apiFetch(`/community/posts?${new URLSearchParams(q || {})}`),
+    posts: (q) => apiFetch(`/community/posts?${new URLSearchParams(q || {})}`).then((r) => r?.posts ?? r),
     createPost: (d) => apiFetch('/community/posts', { method: 'POST', body: d }),
     getPost: (id) => apiFetch(`/community/posts/${id}`),
     deletePost: (id) => apiFetch(`/community/posts/${id}`, { method: 'DELETE' }),

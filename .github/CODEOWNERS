@@ -1,0 +1,19 @@
+# Bestie Paw 路径归属 — 事前冲突预防（见 docs/COORDINATION.md §6）
+# @er1cevans 暂代架构师（Claude Code）账号；后续接入各 agent 对应账号。
+
+# 默认：架构师兜底
+*                                   @er1cevans
+
+# 高风险路径：强制架构师审
+/docs/                              @er1cevans
+/.github/                           @er1cevans
+/bestie-paw-backend/prisma/schema.prisma   @er1cevans
+/bestie-paw-backend/src/config/     @er1cevans
+/bestie-paw-backend/API.md          @er1cevans
+/TASKS.md                           @er1cevans
+
+# 后端业务模块：分配后由对应 agent owner（占位，随任务更新）
+# /bestie-paw-backend/src/modules/   @<assigned-agent>
+
+# 前端模块（占位，随任务更新）
+# /app/                              @<assigned-agent>

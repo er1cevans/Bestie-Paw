@@ -31,8 +31,6 @@ describe('Auth Module Integration Tests', () => {
   });
 
   it('should fail to register with duplicate email', async () => {
-    // First registration is cleared because of afterEach? 
-    // Wait, afterEach clears DB! So I need to register again in this test to test duplication.
     await request(app).post('/api/auth/register').send(registerPayload);
     
     const res = await request(app)
@@ -125,5 +123,26 @@ describe('Auth Module Integration Tests', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.accessToken).toBeDefined();
     expect(res.body.data.refreshToken).toBeDefined();
+  });
+
+  it('should fail to refresh access token with invalid refresh token', async () => {
+    const res = await request(app)
+      .post('/api/auth/refresh')
+      .send({ refreshToken: 'invalid-refresh-token' });
+
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+  });
+
+  it('should fail to register with invalid payload', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({
+        username: 'test',
+        // missing email and password
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
   });
 });

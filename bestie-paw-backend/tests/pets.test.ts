@@ -136,4 +136,18 @@ describe('Pets Module Integration Tests', () => {
     expect(res.body.success).toBe(false);
     expect(res.body.error.code).toBe('NOT_FOUND');
   });
+
+  it('should return BAD_REQUEST when creating pet with missing fields or invalid enum', async () => {
+    const res = await request(app)
+      .post('/api/pets')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({
+        name: 'Buddy',
+        type: 'INVALID_TYPE', // Invalid enum
+        // missing gender
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+  });
 });

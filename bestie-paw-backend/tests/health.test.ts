@@ -200,13 +200,19 @@ describe('Health Module Integration Tests', () => {
     const createRes = await request(app)
       .post(`/api/pets/${petId}/health`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ ...healthPayload, attachments: ['http://localhost:3000/uploads/doc.pdf'] });
+      .send(healthPayload);
     const recordId = createRes.body.data.id;
+
+    const uploadRes = await request(app)
+      .post(`/api/pets/${petId}/health/${recordId}/attachments`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('files', Buffer.from('fake pdf data'), 'doc.pdf');
+    const attachmentUrl = uploadRes.body.data.attachments[0];
 
     const res = await request(app)
       .delete(`/api/pets/${petId}/health/${recordId}/attachments`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ url: 'http://localhost:3000/uploads/doc.pdf' });
+      .send({ url: attachmentUrl });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);

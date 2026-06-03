@@ -221,10 +221,12 @@ describe('Auth Module Integration Tests', () => {
     expect(res.status).toBe(423); // locked
   });
   it('should fail to register with duplicate phone', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload);
+    await request(app).post('/api/auth/register').send({ ...registerPayload, username: 'phone1', phone: '19999999999' });
     const res = await request(app).post('/api/auth/register').send({
       ...registerPayload,
-      email: 'another@example.com' // different email, same phone
+      username: 'phone2',
+      email: 'another@example.com',
+      phone: '19999999999'
     });
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('PHONE_TAKEN');

@@ -217,4 +217,19 @@ describe('Health Module Integration Tests', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
+  it('should fail to remove non-existent health attachment', async () => {
+    const createRes = await request(app)
+      .post(`/api/pets/${petId}/health`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(healthPayload);
+    const recordId = createRes.body.data.id;
+
+    const res = await request(app)
+      .delete(`/api/pets/${petId}/health/${recordId}/attachments`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ url: 'http://localhost:3000/uploads/nonexistent.pdf' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NOT_FOUND');
+  });
 });

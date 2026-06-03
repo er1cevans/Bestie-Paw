@@ -287,6 +287,29 @@ describe('Auth Module Integration Tests', () => {
     expect(res.status).toBe(200);
   });
 
+  it('should request password reset for existing email', async () => {
+    const email = 'exist-forgot@example.com';
+    await request(app).post('/api/auth/register').send({
+      ...registerPayload,
+      email,
+      username: 'exist-forgot'
+    });
+    const res = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email });
+    expect(res.status).toBe(200);
+  });
+
+  it('should fail password reset if user not found', async () => {
+    // Random UUID that does not exist
+    const token = signPasswordResetToken({ userId: '00000000-0000-0000-0000-000000000000' });
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token, password: 'NewPassword123!' });
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('UNAUTHORIZED');
+  });
+
   it('should handle verifyEmail logic (code mismatch and expired)', async () => {
     // We already have "should fail verify-email with invalid code" which covers the basic missing logic.
     // Let's create an unverified user with an expired code

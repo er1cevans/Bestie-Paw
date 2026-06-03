@@ -12,8 +12,11 @@
 | TASK-003 | 覆盖率阈值棘轮抬到 70% | Antigravity | ✅ DONE（PR #13 已合并 2026-06-03；实测 branch 71/func 98） |
 | TASK-004 | 分页信封统一为 `items`（records/posts → items） | Codex | ✅ DONE（PR #9 已合并 2026-06-03，22 用例绿） |
 | TASK-005 | 工具链债务清理（no-explicit-any→error、tsconfig 拆分） | Antigravity | ✅ DONE（PR #14 已合并 2026-06-03） |
+| TASK-006 | 健康附件数量上限 + assertPetOwnership 抽公共 util | 待分配 | PENDING（安全/健壮性，源自 blissful 评审） |
 
-> **阶段小结（2026-06-03）**：TASK-001~005 全部完成，后端质量基建阶段收口。`main` 绿 + 分支保护强制 CI；auth/pets/health 覆盖率 ≥70%；分页契约统一 `items`；ESLint `no-explicit-any` 为 error。下一阶段候选：①补 community/users/weight/reminders/stats 测试；②前端工程化（构建+lint+测试，需 ADR）。
+> **阶段小结（2026-06-03）**：TASK-001~005 全部完成，后端质量基建阶段收口。`main` 绿 + 分支保护强制 CI；auth/pets/health 覆盖率 ≥70%；分页契约统一 `items`；ESLint `no-explicit-any` 为 error。
+> **安全修复（2026-06-03，PR #16）**：修复 reminders 越权 IDOR（updateReminder/deleteReminder 按 petId 收紧 where），含回归测试；摘取自废弃分支 `claude/blissful-archimedes-252661`。
+> 下一阶段候选：①补 community/users/weight/reminders/stats 测试；②前端工程化（构建+lint+测试，需 ADR）。
 
 ---
 
@@ -112,3 +115,19 @@
   - [ ] `API.md` / `API_CONTRACTS.md` 更新，去掉 records/posts 历史差异说明
   - [ ] health.test.ts 断言改为 `items` 且 `npm test` 绿
   - [ ] 属**破坏性变更**：合并前确认前端已同步，避免线上联调断裂
+
+## [TASK-006] 健康附件数量上限 + assertPetOwnership 抽公共 util（安全/健壮性）
+- **状态**: PENDING
+- **分配给**: 待分配
+- **分支**: `agent/<name>/attachment-limit`
+- **涉及路径**: `bestie-paw-backend/src/modules/health/*`（附件上传处）、（可选）新增 `bestie-paw-backend/src/utils/petOwnership.ts` + `health/pets/reminders` service 引用、对应 `tests/`
+- **依赖**: 无（PR #16 已落地 IDOR 修复）
+- **创建**: 2026-06-03　**截止**: 待定
+- **来源**: 抢救自废弃分支 `claude/blissful-archimedes-252661`（提交 76d72f5）的剩余有效项；该分支安全核心（reminders IDOR）已由 PR #16 落地，此为剩余健壮性项。
+- **背景**: 健康记录附件上传当前**无数量上限**，存在被滥用/DoS 的风险（单条记录可无限堆附件）。另：`assertPetOwnership` 在 health/pets/reminders 三处重复实现，可抽公共 util。
+- **验收标准**:
+  - [ ] 健康记录附件上传限制单条记录最多 **20** 个；超出返回 400（含已有 + 本次新增之和）
+  - [ ] （可选）抽 `assertPetOwnership` 到 `utils/petOwnership.ts`，替换 health/pets/reminders 三处重复（**不改变行为**，仅去重）
+  - [ ] 加测试覆盖"超上限被拒"；CI `build-and-test` 绿
+  - [ ] 仅动相关模块，不改契约/`prisma/schema.prisma`
+- **参考实现**: 见 blissful 分支 76d72f5（仅作参考，勿整分支合并——其多数内容已被 main 取代）

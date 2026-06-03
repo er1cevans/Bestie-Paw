@@ -14,7 +14,7 @@ export const listPosts = async (page = 1, limit = 20) => {
   const safePage = Math.max(1, page);
   const safeLimit = Math.min(50, Math.max(1, limit));
 
-  const [posts, total] = await prisma.$transaction([
+  const [items, total] = await prisma.$transaction([
     prisma.post.findMany({
       orderBy: { createdAt: 'desc' },
       skip: (safePage - 1) * safeLimit,
@@ -28,7 +28,7 @@ export const listPosts = async (page = 1, limit = 20) => {
     prisma.post.count()
   ]);
 
-  return { posts, total, page: safePage, limit: safeLimit };
+  return { items, total, page: safePage, limit: safeLimit };
 };
 
 export const createPost = async (authorId: string, content: string, images: string[]) =>

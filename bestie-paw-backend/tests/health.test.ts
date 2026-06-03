@@ -200,7 +200,7 @@ describe('Health Module Integration Tests', () => {
     const createRes = await request(app)
       .post(`/api/pets/${petId}/health`)
       .set('Authorization', `Bearer ${token}`)
-      .send(healthPayload);
+      .send({ ...healthPayload, attachments: ['http://localhost:3000/uploads/doc.pdf'] });
     const recordId = createRes.body.data.id;
 
     const res = await request(app)

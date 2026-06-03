@@ -30,8 +30,8 @@
 ## 5. 分页信封
 - **唯一字段名为 `items`**：所有列表端点统一返回 `{ items, total, page, limit }`。
 - 查询参数 `page`、`limit`。
-- **架构裁定（2026-06-02，决策 B）**：历史端点中 health 返回 `records`、community 返回 `posts`，属契约漂移。**统一收敛为 `items`**——后端 controller + 前端适配层 + 测试一并翻转，见 `TASKS.md` TASK-004（破坏性变更，需前后端同步）。
-- 迁移完成前：现有 health/community 端点运行时仍下发 `records`/`posts`，前端适配层暂时兼容；新端点一律直接用 `items`。
+- **架构裁定（2026-06-02，决策 B）**：历史端点中 health 曾返回 `records`、community 曾返回 `posts`，属契约漂移，已统一收敛为 `items`。
+- **迁移完成 ✅（2026-06-03，PR #9 / TASK-004）**：后端 health/community service、前端 `services.jsx` 适配层（含 demo 模式）、`API.md`、`health.test.ts` 已全部翻转为 `items`。现已无 `records`/`posts` 信封；所有列表端点（含未来新端点）一律用 `items`。
 
 ## 6. 错误码约定
 - 复用 `AppError(code, message, httpStatus)`。常见：`NOT_FOUND`(404)、`FORBIDDEN`(403)、`CONFLICT`(409)、`UNAUTHORIZED`(401)、`VALIDATION`(400)。

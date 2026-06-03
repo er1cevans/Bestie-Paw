@@ -2,15 +2,15 @@
 
 > 架构师（Claude Code）维护，其他 agent 只读。格式见 `docs/COORDINATION.md §8`。
 > 提醒：agent 非自治，本看板是**人读的**；状态由架构师在合并时更新。
-> 更新：2026-06-02
+> 更新：2026-06-03
 
 ## 看板状态
 | 任务 | 标题 | 分配给 | 状态 |
 |---|---|---|---|
 | TASK-001 | 后端核心 API 集成测试套件 | Antigravity | ✅ DONE（PR #6 已合并 2026-06-02） |
 | TASK-002 | CI 工作流 + ESLint 门禁 bootstrap | Claude Code（架构师） | PENDING |
-| TASK-003 | 覆盖率阈值棘轮抬到 70% | **Antigravity** | PENDING（技术债，待 TASK-002 CI 就绪后对齐） |
-| TASK-004 | 分页信封统一为 `items`（records/posts → items） | **Codex** | PENDING（已分配，可开工） |
+| TASK-003 | 覆盖率阈值棘轮抬到 70% | Antigravity | PENDING（技术债，待 TASK-002 CI 就绪后对齐） |
+| TASK-004 | 分页信封统一为 `items`（records/posts → items） | Codex | ✅ DONE（PR #9 已合并 2026-06-03，22 用例绿） |
 
 ---
 
@@ -80,9 +80,9 @@
   - [ ] 与 TASK-002 的 CI 对齐（CI 跑同一阈值）
 
 ## [TASK-004] 分页信封统一为 `items`（契约对齐，决策 = B）
-- **状态**: PENDING（已分配，可开工）
+- **状态**: ✅ DONE（PR #9 已合并 2026-06-03；架构师实跑 22 用例全过、覆盖率达标）
 - **分配给**: Codex
-- **分支**: `agent/codex/pagination-items`
+- **分支**: `agent/codex/pagination-items`（已合并；worktree 待统一回收）
 - **涉及路径（跨端，破坏性变更）**:
   - 后端：`src/modules/health/health.controller.ts`、`src/modules/community/community.controller.ts`（及对应 service/返回处）→ `records`/`posts` 改为 `items`
   - 前端：`app/services.jsx` 适配层（移除对 `records`/`posts` 的拆封，改读 `items`）

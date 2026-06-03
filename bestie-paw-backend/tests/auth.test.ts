@@ -144,6 +144,7 @@ describe('Auth Module Integration Tests', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
+  });
 
   it('should logout and revoke tokens', async () => {
     const registerRes = await request(app).post('/api/auth/register').send({

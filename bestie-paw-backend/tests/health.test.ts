@@ -129,6 +129,7 @@ describe('Health Module Integration Tests', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
+  });
 
   it('should get a single health record', async () => {
     const createRes = await request(app)

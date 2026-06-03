@@ -12,7 +12,8 @@
 | TASK-003 | 覆盖率阈值棘轮抬到 70% | Antigravity | ✅ DONE（PR #13 已合并 2026-06-03；实测 branch 71/func 98） |
 | TASK-004 | 分页信封统一为 `items`（records/posts → items） | Codex | ✅ DONE（PR #9 已合并 2026-06-03，22 用例绿） |
 | TASK-005 | 工具链债务清理（no-explicit-any→error、tsconfig 拆分） | Antigravity | ✅ DONE（PR #14 已合并 2026-06-03） |
-| TASK-006 | 健康附件数量上限 + assertPetOwnership 抽公共 util | 待分配 | PENDING（安全/健壮性，源自 blissful 评审） |
+| TASK-006 | 健康附件数量上限 + assertPetOwnership 抽公共 util | Codex | 🚧 已派发（2026-06-03） |
+| TASK-007 | 后端剩余模块集成测试（community/users/weight/reminders/stats） | Antigravity | 🚧 已派发（2026-06-03） |
 
 > **阶段小结（2026-06-03）**：TASK-001~005 全部完成，后端质量基建阶段收口。`main` 绿 + 分支保护强制 CI；auth/pets/health 覆盖率 ≥70%；分页契约统一 `items`；ESLint `no-explicit-any` 为 error。
 > **安全修复（2026-06-03，PR #16）**：修复 reminders 越权 IDOR（updateReminder/deleteReminder 按 petId 收紧 where），含回归测试；摘取自废弃分支 `claude/blissful-archimedes-252661`。
@@ -117,9 +118,10 @@
   - [ ] 属**破坏性变更**：合并前确认前端已同步，避免线上联调断裂
 
 ## [TASK-006] 健康附件数量上限 + assertPetOwnership 抽公共 util（安全/健壮性）
-- **状态**: PENDING
-- **分配给**: 待分配
-- **分支**: `agent/<name>/attachment-limit`
+- **状态**: 🚧 已派发（2026-06-03）
+- **分配给**: Codex
+- **分支**: `agent/codex/attachment-limit`
+- **协调提醒**: 与 TASK-007（Antigravity）并行。TASK-006 主体是 health 附件上限（health 模块）；可选的 dedup 会动 reminders/pets service——为避免与 TASK-007 的 reminders 测试抢路径，**dedup 部分可暂缓**，先交付附件上限。
 - **涉及路径**: `bestie-paw-backend/src/modules/health/*`（附件上传处）、（可选）新增 `bestie-paw-backend/src/utils/petOwnership.ts` + `health/pets/reminders` service 引用、对应 `tests/`
 - **依赖**: 无（PR #16 已落地 IDOR 修复）
 - **创建**: 2026-06-03　**截止**: 待定
@@ -131,3 +133,22 @@
   - [ ] 加测试覆盖"超上限被拒"；CI `build-and-test` 绿
   - [ ] 仅动相关模块，不改契约/`prisma/schema.prisma`
 - **参考实现**: 见 blissful 分支 76d72f5（仅作参考，勿整分支合并——其多数内容已被 main 取代）
+
+## [TASK-007] 后端剩余模块集成测试（community / users / weight / reminders / stats）
+- **状态**: 🚧 已派发（2026-06-03）
+- **分配给**: Antigravity
+- **分支**: `agent/antigravity/remaining-module-tests`
+- **涉及路径**: 新增 `bestie-paw-backend/tests/{community,users,weight,stats}.test.ts`、扩展 `tests/reminders.test.ts`、`bestie-paw-backend/jest.config.js`（扩 `collectCoverageFrom` + 阈值）
+- **依赖**: 无（CI 容器化 Postgres 已就绪）
+- **创建**: 2026-06-03　**截止**: 待定
+- **背景**: 目前仅 auth/pets/health 有测试。这 5 个模块无/少测试（reminders 仅有 PR #16 的 IDOR 回归）。补齐后端测试盲区。
+- **验收标准**:
+  - [ ] **community**：帖子创建/列表（断言 `items` 分页信封）/详情/删除（作者权限 403）、评论增删、点赞/取消（幂等）
+  - [ ] **users**：GET/PATCH /users/me（手机号唯一 409）、改密码（吊销会话后旧 token 失效）、软删除账号
+  - [ ] **weight**：增/查/删；新增时 `pet.weightKg` 同步；他人宠物 403
+  - [ ] **reminders**（扩展现有）：create 校验（过去日期 400）、complete、list 的 completed 过滤
+  - [ ] **stats**：主要端点正常流
+  - [ ] 扩展 `collectCoverageFrom` 纳入这 5 个模块；各模块行覆盖 **≥70**（确属不可达的分支按文档化方式列在 PR 描述，勿绕过/硬测）；`coverageThreshold` 维持 70；CI `build-and-test` 绿
+  - [ ] **仅加测试 + 改 jest.config**；不改业务逻辑（测试若暴露 bug，只在 PR 描述记录，由架构师另开任务）
+  - [ ] 邮件/SMTP 走 mock，不真实发信；不连真库（CI 容器化）
+- **协调提醒**: 与 TASK-006（Codex）并行。本任务改 `jest.config.js` 的覆盖率范围；TASK-006 不动该文件，避免冲突。

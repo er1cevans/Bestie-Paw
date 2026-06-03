@@ -9,7 +9,7 @@ describe('Pets Module Integration Tests', () => {
   
   let token1: string;
   let token2: string;
-  let petId: string;
+  let _petId: string;
 
   beforeEach(async () => {
     // Cleanup DB
@@ -49,7 +49,7 @@ describe('Pets Module Integration Tests', () => {
     expect(res.body.data.type).toBe('DOG'); // Assert uppercase enum
     expect(res.body.data.gender).toBe('MALE'); // Assert uppercase enum
 
-    petId = res.body.data.id;
+    _petId = res.body.data.id;
   });
 
   it('should list pets for current user', async () => {

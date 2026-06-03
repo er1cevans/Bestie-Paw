@@ -10,7 +10,7 @@
     "start": "node dist/server.js",
     "db:migrate": "prisma migrate dev",
     "db:seed": "ts-node prisma/seed.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.eslint.json",
     "lint": "eslint . --ext .ts",
     "test": "jest --runInBand --coverage"
   },

@@ -63,7 +63,7 @@ bestie-paw/
 ├── .github/
 │   ├── CODEOWNERS             # 路径归属（事前冲突预防）
 │   ├── agents/                # 自定义 agent 定义
-│   └── workflows/             # CI（待建，见 TASKS）
+│   └── workflows/ci.yml       # CI：tsc+eslint+jest（容器化 Postgres），main 已开分支保护
 ├── TASKS.md                   # 任务看板（架构师写，其他只读）
 └── CHANGELOG.md
 ```
@@ -97,9 +97,13 @@ bestie-paw/
 - **不要为整改另开 PR**，也不要关闭重开。只有切换到**新任务/新分支**时才会产生新 PR。
 - 合并后**不复用旧分支**：下个任务开 `agent/<name>/<新任务>` 新分支。
 
-### 集成分支
-- **当前**：PR 直接合入 `main`（仓库现状，无 `dev`）。
-- **决策**：引入 `dev` 作为集成分支前，需先建分支 + 配置分支保护（CI 必过 + 1 review）。在 CI 落地（见 TASK-002）之前，**暂不强制 `dev`**，避免空规范。过渡期 PR 仍合 `main`，但必须满足下方门禁。
+### 集成分支与分支保护
+- **模型（已定）**：所有任务 PR **直接合入 `main`**，不引入 `dev`。理由：单 owner + 少量 agent，`dev` 增加开销而收益有限；分支保护 + CI 已能保证 `main` 绿。引入 `dev` 如有必要须先写 ADR。
+- **`main` 分支保护（已启用 2026-06-03，TASK-002 后）**：
+  - ✅ 必须通过 `build-and-test` 检查（`tsc --noEmit` + `eslint` + `npm test`，容器化 Postgres）才能合并；
+  - ✅ 禁止 force push、禁止删除 `main`；
+  - ❌ 暂不要求人工 approval（单 owner 防自锁）——架构师 Review 仍按 §5 流程执行，只是不由 GitHub 强制；
+  - `enforce_admins` 关闭：owner 保留紧急覆盖能力。接入第二 reviewer 账号后可加 "require 1 approval"。
 
 ---
 

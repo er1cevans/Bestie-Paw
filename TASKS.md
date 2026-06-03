@@ -8,9 +8,10 @@
 | 任务 | 标题 | 分配给 | 状态 |
 |---|---|---|---|
 | TASK-001 | 后端核心 API 集成测试套件 | Antigravity | ✅ DONE（PR #6 已合并 2026-06-02） |
-| TASK-002 | CI 工作流 + ESLint 门禁 bootstrap | Claude Code（架构师） | PENDING |
-| TASK-003 | 覆盖率阈值棘轮抬到 70% | Antigravity | PENDING（技术债，待 TASK-002 CI 就绪后对齐） |
+| TASK-002 | CI 工作流 + ESLint 门禁 bootstrap | Antigravity（架构师 Review） | ✅ DONE（PR #11 已合并 2026-06-03；CI 绿，main 已开分支保护） |
+| TASK-003 | 覆盖率阈值棘轮抬到 70% | Antigravity | 🚧 已派发（2026-06-03） |
 | TASK-004 | 分页信封统一为 `items`（records/posts → items） | Codex | ✅ DONE（PR #9 已合并 2026-06-03，22 用例绿） |
+| TASK-005 | 工具链债务清理（no-explicit-any→error、tsconfig 拆分） | 待分配 | PENDING（技术债） |
 
 ---
 
@@ -51,33 +52,45 @@
 
 ---
 
-## [TASK-002] CI 工作流 + ESLint 门禁 bootstrap（架构层，架构师自持）
-- **状态**: PENDING
-- **分配给**: Claude Code（架构师）
-- **分支**: `agent/claudecode/ci-bootstrap`
-- **涉及路径**: `.github/workflows/ci.yml`、`bestie-paw-backend/.eslintrc.*`、`jest.config.js`（加 coverageThreshold）
-- **依赖**: 与 TASK-001 并行；CI 的 test job 在 TASK-001 合并后才有用例可跑。
+## [TASK-002] CI 工作流 + ESLint 门禁 bootstrap
+- **状态**: ✅ DONE（PR #11 已合并 2026-06-03；`build-and-test` CI 绿；`main` 已开分支保护强制该检查）
+- **分配给**: Antigravity（实现）／Claude Code（架构师 Review + 分支保护）
+- **分支**: `agent/antigravity/ci-bootstrap`（已合并）
 - **创建**: 2026-06-02　**截止**: 2026-06-13
-- **验收标准**:
-  - [ ] CI 在 PR 上跑 `tsc --noEmit` + `eslint` + `npm test`
-  - [ ] ESLint 启用 `@typescript-eslint/no-explicit-any` 等规则
-  - [ ] 三检全绿方可合并；据此再决定是否启用 `dev` 集成分支（COORDINATION §3）
-  - [ ] **CI 中的测试库**：用 Postgres service container + 测试密钥（GitHub Secrets），不连真 Neon；TASK-001 当前依赖真实 Neon schema，CI 需替换为容器化测试库
+- **达成**:
+  - [x] CI 在 PR 上跑 `tsc --noEmit` + `eslint` + `npm test`
+  - [x] ESLint 启用 `@typescript-eslint/no-explicit-any`（暂为 `warn`，1 处违规 `oauth.strategy.ts:55` → 转 TASK-005 改 `error`）
+  - [x] **容器化 Postgres**（postgres:16 service）跑测试，不连 Neon、不需 Secrets
+  - [x] `main` 分支保护已启用：必须 `build-and-test` 通过 + 禁 force push/删除；暂不要求人工 approval（单 owner 防死锁）
+- **遗留/转交**: `tsconfig include tests` 致 build 把测试编进 dist → 转 TASK-005 拆分。
 
 ---
 
 ## [TASK-003] 覆盖率阈值棘轮抬到 70%（技术债）
-- **状态**: PENDING
+- **状态**: 🚧 已派发（2026-06-03）
 - **分配给**: Antigravity（续作）
 - **分支**: `agent/antigravity/coverage-ratchet`
 - **涉及路径**: `bestie-paw-backend/tests/**`、`jest.config.js`
-- **依赖**: TASK-001 已合并 ✅；建议在 TASK-002（CI）就绪后对齐同一阈值
+- **依赖**: TASK-001/002 均已合并 ✅；CI 已就绪，PR 会自动跑同一阈值
 - **创建**: 2026-06-02　**截止**: 待定
 - **背景**: TASK-001 为让门禁变绿，把 `coverageThreshold` 临时设为 branches 44 / functions 66（statements·lines 70）。branches 44% 偏低。
 - **验收标准**:
   - [ ] 补错误/边界用例，把 auth·pets·health 的 branches/functions 抬到 ≥ 70
   - [ ] `jest.config.js` 阈值四项统一回 70，`npm test` 仍绿
-  - [ ] 与 TASK-002 的 CI 对齐（CI 跑同一阈值）
+  - [ ] CI 的 `build-and-test` 仍绿（阈值即 CI 门禁）
+
+## [TASK-005] 工具链债务清理（技术债）
+- **状态**: PENDING
+- **分配给**: 待分配
+- **分支**: `agent/<name>/toolchain-cleanup`
+- **涉及路径**: `bestie-paw-backend/.eslintrc.json`、`bestie-paw-backend/tsconfig*.json`、`src/modules/auth/oauth.strategy.ts`、`package.json`
+- **依赖**: TASK-002 已合并 ✅
+- **创建**: 2026-06-03　**截止**: 待定
+- **背景**: TASK-002 为不阻塞合并，留了两处工具链债务。
+- **验收标准**:
+  - [ ] 修掉 `oauth.strategy.ts:55` 的 `any`，把 `no-explicit-any` 从 `warn` 提到 `error`
+  - [ ] 拆出 `tsconfig.eslint.json`（含 `tests`）供 typecheck/lint 用；`build` 的 tsconfig 仅含 `src`，避免测试被编进 `dist`
+  - [ ] `npm run lint` / `typecheck` / `build` / `test` 均通过，CI `build-and-test` 绿
 
 ## [TASK-004] 分页信封统一为 `items`（契约对齐，决策 = B）
 - **状态**: ✅ DONE（PR #9 已合并 2026-06-03；架构师实跑 22 用例全过、覆盖率达标）

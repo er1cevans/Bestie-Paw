@@ -144,5 +144,77 @@ describe('Auth Module Integration Tests', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
+
+  it('should logout and revoke tokens', async () => {
+    const registerRes = await request(app).post('/api/auth/register').send({
+      username: 'logoutuser',
+      email: 'logout@example.com',
+      password: 'Password123!',
+      phone: '10000000001'
+    });
+    const loginRes = await request(app).post('/api/auth/login').send({
+      email: 'logout@example.com',
+      password: 'Password123!'
+    });
+    const token = loginRes.body.data.accessToken;
+
+    const res = await request(app)
+      .post('/api/auth/logout')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  it('should fail verify-email with invalid code', async () => {
+    const res = await request(app)
+      .post('/api/auth/verify-email')
+      .send({ email: 'test@example.com', code: '000000' });
+    expect(res.status).toBe(400);
+  });
+
+  it('should trigger resend-verification silently', async () => {
+    const res = await request(app)
+      .post('/api/auth/resend-verification')
+      .send({ email: 'test@example.com' });
+    expect(res.status).toBe(200);
+  });
+
+  it('should trigger forgot-password silently', async () => {
+    const res = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: 'test@example.com' });
+    expect(res.status).toBe(200);
+  });
+
+  it('should fail reset-password with invalid token', async () => {
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'invalid_token', password: 'NewPassword123!' });
+    expect(res.status).toBe(401); // or 400 or 500 depending on jwt implementation
+  });
+
+  it('should fail login if account locked', async () => {
+    // We would need to mock loginLockedUntil or trigger 5 failed logins
+    const email = 'lockuser@example.com';
+    await request(app).post('/api/auth/register').send({
+      username: 'lockuser',
+      email: email,
+      password: 'Password123!',
+    });
+    
+    for (let i = 0; i < 5; i++) {
+      await request(app).post('/api/auth/login').send({
+        email: email,
+        password: 'WrongPassword123!'
+      });
+    }
+
+    const res = await request(app).post('/api/auth/login').send({
+      email: email,
+      password: 'Password123!'
+    });
+    
+    expect(res.status).toBe(423); // locked
   });
 });

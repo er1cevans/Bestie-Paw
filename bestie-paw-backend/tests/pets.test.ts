@@ -149,5 +149,43 @@ describe('Pets Module Integration Tests', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
+
+  it('should update pet birthday', async () => {
+    const createRes = await request(app).post('/api/pets').set('Authorization', `Bearer ${token1}`).send(petPayload);
+    const id = createRes.body.data.id;
+
+    const res = await request(app)
+      .patch(`/api/pets/${id}`)
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ birthday: '2023-01-01' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.birthday).toBeDefined();
+  });
+
+  it('should upload pet avatar', async () => {
+    const createRes = await request(app).post('/api/pets').set('Authorization', `Bearer ${token1}`).send(petPayload);
+    const id = createRes.body.data.id;
+
+    const res = await request(app)
+      .post(`/api/pets/${id}/avatar`)
+      .set('Authorization', `Bearer ${token1}`)
+      .attach('avatar', Buffer.from('fake image data'), 'avatar.png');
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  it('should handle avatar upload if no file', async () => {
+    const createRes = await request(app).post('/api/pets').set('Authorization', `Bearer ${token1}`).send(petPayload);
+    const id = createRes.body.data.id;
+
+    // missing .attach()
+    const res = await request(app)
+      .post(`/api/pets/${id}/avatar`)
+      .set('Authorization', `Bearer ${token1}`);
+
+    expect(res.status).toBe(200);
   });
 });

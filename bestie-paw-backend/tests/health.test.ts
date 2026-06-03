@@ -129,5 +129,85 @@ describe('Health Module Integration Tests', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
+
+  it('should get a single health record', async () => {
+    const createRes = await request(app)
+      .post(`/api/pets/${petId}/health`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(healthPayload);
+    const recordId = createRes.body.data.id;
+
+    const res = await request(app)
+      .get(`/api/pets/${petId}/health/${recordId}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.id).toBe(recordId);
+  });
+
+  it('should patch a health record', async () => {
+    const createRes = await request(app)
+      .post(`/api/pets/${petId}/health`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(healthPayload);
+    const recordId = createRes.body.data.id;
+
+    const res = await request(app)
+      .patch(`/api/pets/${petId}/health/${recordId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: 'Updated title' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.title).toBe('Updated title');
+  });
+
+  it('should upload health attachments', async () => {
+    const createRes = await request(app)
+      .post(`/api/pets/${petId}/health`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(healthPayload);
+    const recordId = createRes.body.data.id;
+
+    const res = await request(app)
+      .post(`/api/pets/${petId}/health/${recordId}/attachments`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('files', Buffer.from('fake pdf data'), 'doc.pdf');
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  it('should handle upload health attachments with no files', async () => {
+    const createRes = await request(app)
+      .post(`/api/pets/${petId}/health`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(healthPayload);
+    const recordId = createRes.body.data.id;
+
+    const res = await request(app)
+      .post(`/api/pets/${petId}/health/${recordId}/attachments`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.message).toBe('No files uploaded');
+  });
+
+  it('should remove a health attachment', async () => {
+    const createRes = await request(app)
+      .post(`/api/pets/${petId}/health`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(healthPayload);
+    const recordId = createRes.body.data.id;
+
+    const res = await request(app)
+      .delete(`/api/pets/${petId}/health/${recordId}/attachments`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ url: 'http://localhost:3000/uploads/doc.pdf' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
   });
 });

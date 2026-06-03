@@ -9,9 +9,11 @@
 |---|---|---|---|
 | TASK-001 | 后端核心 API 集成测试套件 | Antigravity | ✅ DONE（PR #6 已合并 2026-06-02） |
 | TASK-002 | CI 工作流 + ESLint 门禁 bootstrap | Antigravity（架构师 Review） | ✅ DONE（PR #11 已合并 2026-06-03；CI 绿，main 已开分支保护） |
-| TASK-003 | 覆盖率阈值棘轮抬到 70% | Antigravity | 🚧 已派发（2026-06-03） |
+| TASK-003 | 覆盖率阈值棘轮抬到 70% | Antigravity | ✅ DONE（PR #13 已合并 2026-06-03；实测 branch 71/func 98） |
 | TASK-004 | 分页信封统一为 `items`（records/posts → items） | Codex | ✅ DONE（PR #9 已合并 2026-06-03，22 用例绿） |
-| TASK-005 | 工具链债务清理（no-explicit-any→error、tsconfig 拆分） | 待分配 | PENDING（技术债） |
+| TASK-005 | 工具链债务清理（no-explicit-any→error、tsconfig 拆分） | Antigravity | ✅ DONE（PR #14 已合并 2026-06-03） |
+
+> **阶段小结（2026-06-03）**：TASK-001~005 全部完成，后端质量基建阶段收口。`main` 绿 + 分支保护强制 CI；auth/pets/health 覆盖率 ≥70%；分页契约统一 `items`；ESLint `no-explicit-any` 为 error。下一阶段候选：①补 community/users/weight/reminders/stats 测试；②前端工程化（构建+lint+测试，需 ADR）。
 
 ---
 
@@ -67,7 +69,7 @@
 ---
 
 ## [TASK-003] 覆盖率阈值棘轮抬到 70%（技术债）
-- **状态**: 🚧 已派发（2026-06-03）
+- **状态**: ✅ DONE（PR #13 已合并 2026-06-03；CI 实测 stmts 95 / branch 71.6 / func 98 / lines 95，四项阈值=70）
 - **分配给**: Antigravity（续作）
 - **分支**: `agent/antigravity/coverage-ratchet`
 - **涉及路径**: `bestie-paw-backend/tests/**`、`jest.config.js`
@@ -80,9 +82,9 @@
   - [ ] CI 的 `build-and-test` 仍绿（阈值即 CI 门禁）
 
 ## [TASK-005] 工具链债务清理（技术债）
-- **状态**: PENDING
-- **分配给**: 待分配
-- **分支**: `agent/<name>/toolchain-cleanup`
+- **状态**: ✅ DONE（PR #14 已合并 2026-06-03；`any` 在 #13 已修，本 PR 提规则为 error + 拆 tsconfig.eslint.json）
+- **分配给**: Antigravity
+- **分支**: `agent/antigravity/toolchain-cleanup`
 - **涉及路径**: `bestie-paw-backend/.eslintrc.json`、`bestie-paw-backend/tsconfig*.json`、`src/modules/auth/oauth.strategy.ts`、`package.json`
 - **依赖**: TASK-002 已合并 ✅
 - **创建**: 2026-06-03　**截止**: 待定

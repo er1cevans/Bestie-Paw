@@ -28,7 +28,7 @@ Base URL: /api
 - POST /pets/:petId/avatar — Upload pet avatar.
 
 ## Health Records (Auth)
-- GET /pets/:petId/health — List health records (type, page, limit). Returns { records, total, page, limit }.
+- GET /pets/:petId/health — List health records (type, page, limit). Returns { items, total, page, limit }.
 - POST /pets/:petId/health — Create health record.
 - GET /pets/:petId/health/:recordId — Get health record.
 - PATCH /pets/:petId/health/:recordId — Update health record.
@@ -49,7 +49,7 @@ Base URL: /api
 - DELETE /pets/:petId/reminders/:reminderId — Delete reminder.
 
 ## Community (Auth)
-- GET /community/posts — List posts (page, limit). Returns { posts, total, page, limit }.
+- GET /community/posts — List posts (page, limit). Returns { items, total, page, limit }.
 - POST /community/posts — Create post with images (content ≤ 2000 chars).
 - GET /community/posts/:postId — Get post with comments (oldest first, each with author info).
 - DELETE /community/posts/:postId — Delete post (author only).

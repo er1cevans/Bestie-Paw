@@ -77,7 +77,7 @@ async function apiFetch(path, opts = {}) {
 }
 
 // ---- Enum case + pagination-envelope adapters (backend uses UPPERCASE enums
-//      and {records}/{posts} envelopes; frontend uses lowercase + bare arrays) ----
+//      and {items} pagination envelopes; frontend uses lowercase + bare arrays) ----
 const PET_ENUM_FIELDS = ['type', 'gender', 'neutered'];
 const _up = (obj, fields) => {
   if (!obj || typeof obj !== 'object') return obj;
@@ -92,6 +92,14 @@ const _lo = (obj, fields) => {
   return o;
 };
 const _loList = (arr, fields) => (Array.isArray(arr) ? arr.map((x) => _lo(x, fields)) : arr);
+const _items = (page) => (Array.isArray(page?.items) ? page.items : []);
+const _page = (items, q = {}) => {
+  const total = items.length;
+  const page = Math.max(1, Number(q?.page) || 1);
+  const limit = Math.min(50, Math.max(1, Number(q?.limit) || total || 20));
+  const start = (page - 1) * limit;
+  return { items: items.slice(start, start + limit), total, page, limit };
+};
 
 // Resolve a stored upload URL (e.g. "/uploads/x.jpg") against the backend origin,
 // since the frontend (e.g. :4173) and API (e.g. :3000) may differ. Absolute URLs pass through.
@@ -133,7 +141,7 @@ const api = {
   health: {
     list: (petId, q) => {
       const qq = q && q.type ? { ...q, type: String(q.type).toUpperCase() } : q;
-      return apiFetch(`/pets/${petId}/health?${new URLSearchParams(qq || {})}`).then((r) => _loList(r?.records ?? r, ['type']));
+      return apiFetch(`/pets/${petId}/health?${new URLSearchParams(qq || {})}`).then((r) => _loList(_items(r), ['type']));
     },
     create: (petId, d) => apiFetch(`/pets/${petId}/health`, { method: 'POST', body: _up(d, ['type']) }).then((r) => _lo(r, ['type'])),
     get: (petId, id) => apiFetch(`/pets/${petId}/health/${id}`).then((r) => _lo(r, ['type'])),
@@ -162,7 +170,7 @@ const api = {
     delete: (petId, id) => apiFetch(`/pets/${petId}/weight/${id}`, { method: 'DELETE' }),
   },
   community: {
-    posts: (q) => apiFetch(`/community/posts?${new URLSearchParams(q || {})}`).then((r) => r?.posts ?? r),
+    posts: (q) => apiFetch(`/community/posts?${new URLSearchParams(q || {})}`).then((r) => _items(r)),
     createPost: (d) => apiFetch('/community/posts', { method: 'POST', body: d }),
     getPost: (id) => apiFetch(`/community/posts/${id}`),
     deletePost: (id) => apiFetch(`/community/posts/${id}`, { method: 'DELETE' }),
@@ -251,7 +259,10 @@ const demoApi = {
     },
   },
   health: {
-    list: async (petId) => getDemoState().healthRecords.filter(h => h.petId === petId),
+    list: async (petId, q) => {
+      const records = getDemoState().healthRecords.filter(h => h.petId === petId && (!q?.type || h.type === String(q.type).toLowerCase()));
+      return _page(records, q);
+    },
     create: async (petId, d) => { const s = getDemoState(); const h = { id: 'h' + Date.now(), petId, ...d, attachments: [] }; s.healthRecords.unshift(h); saveDemoState(); return h; },
     delete: async (petId, id) => { const s = getDemoState(); s.healthRecords = s.healthRecords.filter(h => h.id !== id); saveDemoState(); },
     uploadAttachments: async (petId, recordId, files) => {
@@ -283,7 +294,7 @@ const demoApi = {
     delete: async (petId, id) => { const s = getDemoState(); s.weights = s.weights.filter(w => w.id !== id); saveDemoState(); },
   },
   community: {
-    posts: async () => getDemoState().posts,
+    posts: async (q) => _page(getDemoState().posts, q),
     createPost: async (d) => { const s = getDemoState(); const p = { id: 'c' + Date.now(), authorId: 'u1', ...d, likes: 0, createdAt: new Date().toISOString(), author: s.user }; s.posts.unshift(p); saveDemoState(); return p; },
     like: async (id) => { const s = getDemoState(); const p = s.posts.find(x => x.id === id); if (p) p.likes++; saveDemoState(); return { liked: true }; },
     unlike: async (id) => { const s = getDemoState(); const p = s.posts.find(x => x.id === id); if (p && p.likes > 0) p.likes--; saveDemoState(); return { liked: false }; },
@@ -312,7 +323,10 @@ function createSmartApi() {
               return async (...args) => {
                 if (await checkBackend()) {
                   const demoFn = demoApi[prop]?.[innerProp];
-                  if (demoFn) return demoFn(...args);
+                  if (demoFn) {
+                    const result = await demoFn(...args);
+                    return Array.isArray(result?.items) ? result.items : result;
+                  }
                   throw { code: 'NOT_IMPLEMENTED', message: 'Demo mode: not available' };
                 }
                 return innerTarget[innerProp](...args);

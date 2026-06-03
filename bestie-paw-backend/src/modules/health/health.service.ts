@@ -43,7 +43,7 @@ export const listHealthRecords = async (
   const safeLimit = Math.min(50, Math.max(1, limit));
   const where = { petId, ...(type ? { type } : {}) };
 
-  const [records, total] = await prisma.$transaction([
+  const [items, total] = await prisma.$transaction([
     prisma.healthRecord.findMany({
       where,
       orderBy: { date: 'desc' },
@@ -53,7 +53,7 @@ export const listHealthRecords = async (
     prisma.healthRecord.count({ where })
   ]);
 
-  return { records, total, page: safePage, limit: safeLimit };
+  return { items, total, page: safePage, limit: safeLimit };
 };
 
 export const createHealthRecord = async (

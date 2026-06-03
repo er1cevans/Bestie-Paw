@@ -66,18 +66,18 @@ describe('Health Module Integration Tests', () => {
     expect(res.body.success).toBe(true);
     
     // Assert pagination envelope
-    expect(res.body.data.records).toBeDefined();
-    expect(Array.isArray(res.body.data.records)).toBe(true);
+    expect(res.body.data.items).toBeDefined();
+    expect(Array.isArray(res.body.data.items)).toBe(true);
     expect(res.body.data.total).toBeDefined();
     expect(res.body.data.page).toBeDefined();
     expect(res.body.data.limit).toBeDefined();
 
-    expect(res.body.data.records.length).toBe(1);
+    expect(res.body.data.items.length).toBe(1);
     expect(res.body.data.total).toBe(1);
     expect(res.body.data.page).toBe(1);
     expect(res.body.data.limit).toBe(10);
-    expect(res.body.data.records[0].title).toBe(healthPayload.title);
-    expect(res.body.data.records[0].type).toBe('VACCINE');
+    expect(res.body.data.items[0].title).toBe(healthPayload.title);
+    expect(res.body.data.items[0].type).toBe('VACCINE');
   });
 
   it('should delete a health record', async () => {

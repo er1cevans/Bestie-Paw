@@ -16,8 +16,8 @@ describe('Auth Module Integration Tests', () => {
     await prisma.user.deleteMany();
   });
 
-  let accessToken: string;
-  let refreshToken: string;
+  let _accessToken: string;
+  let _refreshToken: string;
 
   it('should register a new user', async () => {
     const res = await request(app)
@@ -57,8 +57,8 @@ describe('Auth Module Integration Tests', () => {
     expect(res.body.data.accessToken).toBeDefined();
     expect(res.body.data.refreshToken).toBeDefined();
 
-    accessToken = res.body.data.accessToken;
-    refreshToken = res.body.data.refreshToken;
+    _accessToken = res.body.data.accessToken;
+    _refreshToken = res.body.data.refreshToken;
   });
 
   it('should fail login with wrong password', async () => {

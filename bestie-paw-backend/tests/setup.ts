@@ -1,6 +1,4 @@
 /// <reference types="jest" />
-import dotenv from 'dotenv';
-import path from 'path';
 import { prisma } from '../src/utils/prisma';
 
 // Mock nodemailer

@@ -11,7 +11,7 @@ import {
   updateHealthRecord
 } from './health.service';
 import { healthCreateSchema, healthTypeEnum, healthUpdateSchema } from './health.schema';
-import { resolveFileUrl } from '../../middleware/upload';
+import { deleteUploadedFile, resolveFileUrl } from '../../middleware/upload';
 
 const removeAttachmentSchema = z.object({ url: z.string().min(1) });
 
@@ -81,8 +81,9 @@ export const uploadHealthAttachmentsHandler = async (
   res: Response,
   next: NextFunction
 ) => {
+  const files = req.files as Express.Multer.File[] | undefined;
+
   try {
-    const files = req.files as Express.Multer.File[] | undefined;
     if (!files || files.length === 0) {
       return sendSuccess(res, { message: 'No files uploaded' });
     }
@@ -97,6 +98,7 @@ export const uploadHealthAttachmentsHandler = async (
 
     return sendSuccess(res, data);
   } catch (err) {
+    files?.forEach((file) => deleteUploadedFile(resolveFileUrl(file.filename)));
     return next(err);
   }
 };

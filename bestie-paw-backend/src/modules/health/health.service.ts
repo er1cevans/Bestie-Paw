@@ -4,6 +4,8 @@ import { AppError } from '../../middleware/errorHandler';
 import { deleteUploadedFile } from '../../middleware/upload';
 import type { HealthCreateInput, HealthUpdateInput } from './health.schema';
 
+const MAX_HEALTH_ATTACHMENTS = 20;
+
 const assertPetOwnership = async (userId: string, petId: string) => {
   const pet = await prisma.pet.findUnique({ where: { id: petId } });
   if (!pet) {
@@ -106,7 +108,15 @@ export const addHealthAttachments = async (
   recordId: string,
   attachments: string[]
 ) => {
-  await assertRecordOwnership(userId, petId, recordId);
+  const record = await assertRecordOwnership(userId, petId, recordId);
+
+  if (record.attachments.length + attachments.length > MAX_HEALTH_ATTACHMENTS) {
+    throw new AppError(
+      'ATTACHMENT_LIMIT',
+      `A health record can have at most ${MAX_HEALTH_ATTACHMENTS} attachments`,
+      400
+    );
+  }
 
   return prisma.healthRecord.update({
     where: { id: recordId },

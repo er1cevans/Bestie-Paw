@@ -1,12 +1,16 @@
 /// <reference types="jest" />
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import request from 'supertest';
 import app from '../src/app';
+import { env } from '../src/config/env';
 import { prisma } from '../src/utils/prisma';
 
 describe('Health Module Integration Tests', () => {
   const user = { username: 'healthuser', email: 'healthuser@example.com', password: 'Password123!' };
   const user2 = { username: 'healthuser2', email: 'healthuser2@example.com', password: 'Password123!' };
   const petPayload = { name: 'HealthPet', type: 'CAT', gender: 'FEMALE' };
+  const uploadDir = path.resolve(env.UPLOAD_DIR);
   
   let token: string;
   let token2: string;
@@ -37,6 +41,50 @@ describe('Health Module Integration Tests', () => {
     description: 'Annual rabies shot',
     vetName: 'Dr. Smith',
     clinic: 'Happy Paws Clinic'
+  };
+
+  const readUploadFiles = async () => {
+    try {
+      return new Set(await fs.readdir(uploadDir));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return new Set<string>();
+      }
+
+      throw error;
+    }
+  };
+
+  const expectNoNewUploadFiles = async (beforeUploadFiles: Set<string>) => {
+    let newUploadFiles: string[] = [];
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const afterUploadFiles = await readUploadFiles();
+      newUploadFiles = [...afterUploadFiles].filter((file) => !beforeUploadFiles.has(file));
+      if (newUploadFiles.length === 0) {
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+
+    expect(newUploadFiles).toEqual([]);
+  };
+
+  const uploadPdfAttachments = (recordId: string, count: number) => {
+    const uploadRequest = request(app)
+      .post(`/api/pets/${petId}/health/${recordId}/attachments`)
+      .set('Authorization', `Bearer ${token}`);
+
+    for (let index = 0; index < count; index += 1) {
+      uploadRequest.attach(
+        'files',
+        Buffer.from(`fake pdf data ${index}`),
+        `doc-${index}.pdf`
+      );
+    }
+
+    return uploadRequest;
   };
 
   it('should create a health record and return uppercase enum', async () => {
@@ -178,6 +226,46 @@ describe('Health Module Integration Tests', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
+  });
+
+  it('should upload health attachments up to the total limit', async () => {
+    const createRes = await request(app)
+      .post(`/api/pets/${petId}/health`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(healthPayload);
+    const recordId = createRes.body.data.id;
+
+    for (let batch = 0; batch < 4; batch += 1) {
+      const res = await uploadPdfAttachments(recordId, 5);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.attachments).toHaveLength((batch + 1) * 5);
+    }
+  });
+
+  it('should reject health attachments over the total limit and clean uploaded files', async () => {
+    const createRes = await request(app)
+      .post(`/api/pets/${petId}/health`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(healthPayload);
+    const recordId = createRes.body.data.id;
+
+    for (let batch = 0; batch < 4; batch += 1) {
+      const res = await uploadPdfAttachments(recordId, 5);
+      expect(res.status).toBe(200);
+    }
+
+    const beforeUploadFiles = await readUploadFiles();
+    const res = await uploadPdfAttachments(recordId, 1);
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe('ATTACHMENT_LIMIT');
+    await expectNoNewUploadFiles(beforeUploadFiles);
+
+    const record = await prisma.healthRecord.findUnique({ where: { id: recordId } });
+    expect(record?.attachments).toHaveLength(20);
   });
 
   it('should handle upload health attachments with no files', async () => {

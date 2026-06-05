@@ -2,19 +2,10 @@ import { HealthRecordType } from '@prisma/client';
 import { prisma } from '../../utils/prisma';
 import { AppError } from '../../middleware/errorHandler';
 import { deleteUploadedFile } from '../../middleware/upload';
+import { assertPetOwnership } from '../../utils/petOwnership';
 import type { HealthCreateInput, HealthUpdateInput } from './health.schema';
 
 const MAX_HEALTH_ATTACHMENTS = 20;
-
-const assertPetOwnership = async (userId: string, petId: string) => {
-  const pet = await prisma.pet.findUnique({ where: { id: petId } });
-  if (!pet) {
-    throw new AppError('NOT_FOUND', 'Pet not found', 404);
-  }
-  if (pet.ownerId !== userId) {
-    throw new AppError('FORBIDDEN', 'Not allowed', 403);
-  }
-};
 
 const assertRecordOwnership = async (userId: string, petId: string, recordId: string) => {
   const record = await prisma.healthRecord.findFirst({

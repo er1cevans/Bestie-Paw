@@ -1,20 +1,9 @@
 import { prisma } from '../../utils/prisma';
 import { sendMail } from '../../utils/mailer';
 import { env } from '../../config/env';
-import { AppError } from '../../middleware/errorHandler';
 import { deleteUploadedFile } from '../../middleware/upload';
+import { assertPetOwnership } from '../../utils/petOwnership';
 import type { PetCreateInput, PetUpdateInput } from './pets.schema';
-
-const assertPetOwnership = async (userId: string, petId: string) => {
-  const pet = await prisma.pet.findUnique({ where: { id: petId } });
-  if (!pet) {
-    throw new AppError('NOT_FOUND', 'Pet not found', 404);
-  }
-  if (pet.ownerId !== userId) {
-    throw new AppError('FORBIDDEN', 'Not allowed', 403);
-  }
-  return pet;
-};
 
 export const listPets = async (userId: string) =>
   prisma.pet.findMany({ where: { ownerId: userId } });

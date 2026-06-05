@@ -2,7 +2,18 @@
 
 > 架构师（Claude Code）维护，其他 agent 只读。格式见 `docs/COORDINATION.md §8`。
 > 提醒：agent 非自治，本看板是**人读的**；状态由架构师在合并时更新。
-> 更新：2026-06-03
+> 更新：2026-06-05
+
+## 🏁 Phase 1 — 后端工程基建（已收尾 2026-06-05）
+TASK-001~008 全部闭环，外加安全修复（PR #16 IDOR）与鉴权收敛（PR #24）。**后端工程质量基建至此完整**：
+- 8 模块全量集成测试，全局覆盖率 ≥70%，由 CI 强制
+- 容器化 CI（`tsc` + `eslint` + `jest`）+ `main` 分支保护
+- ESLint `no-explicit-any` = error、tsconfig 拆分
+- 契约统一 `items`、迁移基线化（消除 P3018）、ts-jest 去噪
+- 安全：reminders IDOR 修复、健康附件上限、宠物级 `assertPetOwnership` 收敛为唯一来源
+
+**Phase 2（前端工程化）**：见 `docs/ADR/0001-frontend-build-tooling.md`（Proposed，待 Owner 批准后启动）。
+**生产硬化**：见文末「Backlog」，**上线前按需另开 Phase**，当前不做。
 
 ## 看板状态
 | 任务 | 标题 | 分配给 | 状态 |
@@ -16,9 +27,7 @@
 | TASK-007 | 后端剩余模块集成测试（community/users/weight/reminders/stats） | Antigravity | ✅ DONE（PR #19 已合并 2026-06-05；81 用例绿，全局覆盖 ≥70） |
 | TASK-008 | CI 健壮性（迁移 P3018 + ts-jest isolatedModules 噪音） | Claude Code | ✅ DONE（PR #22） |
 
-> **阶段小结（2026-06-03）**：TASK-001~005 全部完成，后端质量基建阶段收口。`main` 绿 + 分支保护强制 CI；auth/pets/health 覆盖率 ≥70%；分页契约统一 `items`；ESLint `no-explicit-any` 为 error。
-> **安全修复（2026-06-03，PR #16）**：修复 reminders 越权 IDOR（updateReminder/deleteReminder 按 petId 收紧 where），含回归测试；摘取自废弃分支 `claude/blissful-archimedes-252661`。
-> 下一阶段候选：①补 community/users/weight/reminders/stats 测试；②前端工程化（构建+lint+测试，需 ADR）。
+> 详细任务卡见下方各 `## [TASK-00X]` 区块；生产硬化 backlog 见文末。
 
 ---
 
@@ -119,7 +128,7 @@
   - [ ] 属**破坏性变更**：合并前确认前端已同步，避免线上联调断裂
 
 ## [TASK-006] 健康附件数量上限 + assertPetOwnership 抽公共 util（安全/健壮性）
-- **状态**: ✅ DONE（PR #20 已合并 2026-06-04；上限 20 + 被拒上传清理孤儿文件 + 测试）。dedup 部分按协调暂缓未做。
+- **状态**: ✅ DONE（附件上限 PR #20 已合并 2026-06-04；assertPetOwnership 抽 util 的 dedup 部分由 PR #24 补完 2026-06-05）。
 - **分配给**: Codex
 - **分支**: `agent/codex/attachment-limit`
 - **协调提醒**: 与 TASK-007（Antigravity）并行。TASK-006 主体是 health 附件上限（health 模块）；可选的 dedup 会动 reminders/pets service——为避免与 TASK-007 的 reminders 测试抢路径，**dedup 部分可暂缓**，先交付附件上限。
@@ -173,3 +182,19 @@
   - 新增基线迁移 `20260529000000_init`（`migrate diff --from-empty → 旧态schema` 生成），排在两个 add 迁移之前；离线证明 `init + mig1 + mig2 == schema.prisma` 零漂移。CI 日志确认干净库 `migrate deploy` 三迁移依序应用、无 P3018、不再触发 db-push 兜底。
   - `tsconfig.json` 设 `isolatedModules: true` 消除 TS151002；typecheck / build / lint 仍绿。
 - **遗留/转交**: 现有 db-push 建的 dev/prod 库需 Owner 手动 `prisma migrate resolve --applied <三个迁移>` 标记基线（详见 PR #22 描述）。全新库无需操作。
+
+---
+
+# Backlog — 生产硬化（Phase 3 候选，上线前按需启动，当前不做）
+
+> 这些**不属于工程基建**，是上线/运维前的硬化项。多数需 Owner 提供凭证/基础设施或对真库操作，故不在 Phase 1 范围。需要上线时再正式拆任务、开 Phase。
+
+| 编号 | 项 | 触发点 | 备注 |
+|---|---|---|---|
+| BL-1 | **文件存储改对象存储**（S3/R2） | 准备生产部署时 | 当前 multer 落本地磁盘，多实例/重启会丢文件；需 Owner 开桶+凭证 |
+| BL-2 | **OAuth(Google/Apple) 端到端验证** | 上线前 | 仅配置位、未实测；需 Owner 提供真实凭证 + 人工走流程 |
+| BL-3 | **可观测性**（指标/错误追踪/告警） | 准备生产部署时 | 现仅 winston 日志；需选型（Sentry/Datadog）+ 接基础设施 |
+| BL-4 | **reminders cron 健壮性**（并行发信/批量更新/并发锁） | 提醒量上规模或出现问题时 | 优化非正确性；参考废弃分支 blissful 76d72f5 |
+| BL-5 | **存量库迁移基线化** `migrate resolve` | 首次对现有 dev/Neon 库跑 `migrate deploy` 前 | 一次性运维步骤，仅 Owner 对真库执行；操作见 PR #22 |
+| BL-6 | **上传/输入硬限制审计**（大小、类型、速率） | 上线前安全审计 | 附件数量上限已做（TASK-006）；其余输入边界待统一审计 |
+

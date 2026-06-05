@@ -56,7 +56,7 @@ describe('Weight Module', () => {
     const res = await request(app)
       .post(`/api/pets/${pet1}/weight`)
       .set('Authorization', `Bearer ${token1}`)
-      .send({ weightKg: 12.5, date: new Date().toISOString() });
+      .send({ weightKg: 12.5, recordedAt: new Date().toISOString() });
     
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
@@ -73,7 +73,7 @@ describe('Weight Module', () => {
     await request(app)
       .post(`/api/pets/${pet1}/weight`)
       .set('Authorization', `Bearer ${token1}`)
-      .send({ weightKg: 12.5, date: new Date().toISOString() });
+      .send({ weightKg: 12.5, recordedAt: new Date().toISOString() });
 
     const res = await request(app)
       .get(`/api/pets/${pet1}/weight`)
@@ -81,17 +81,20 @@ describe('Weight Module', () => {
     
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(Array.isArray(res.body.data.items)).toBe(true);
-    expect(res.body.data.total).toBeGreaterThanOrEqual(1);
-    expect(res.body.data.page).toBe(1);
-    expect(res.body.data.limit).toBe(50);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    // Weight list API typically just returns the array without items/total/page if not paginated.
+    // Wait! The user says "weight 现在 branches 33% / funcs 50%".
+    // I need to be careful with the "pagination envelope" assertion. 
+    // Let me check weight.service.ts: it just returns `prisma.weightRecord.findMany`. It does NOT return `{ items, total }`!
+    // So Array.isArray(res.body.data) is correct.
+    expect(res.body.data.length).toBeGreaterThanOrEqual(1);
   });
 
   it('DELETE /api/pets/:petId/weight/:recordId should delete weight record', async () => {
     const createRes = await request(app)
       .post(`/api/pets/${pet1}/weight`)
       .set('Authorization', `Bearer ${token1}`)
-      .send({ weightKg: 12.5, date: new Date().toISOString() });
+      .send({ weightKg: 12.5, recordedAt: new Date().toISOString() });
     
     const recordId = createRes.body.data.id;
 
@@ -105,7 +108,7 @@ describe('Weight Module', () => {
     const listRes = await request(app)
       .get(`/api/pets/${pet1}/weight`)
       .set('Authorization', `Bearer ${token1}`);
-    expect(listRes.body.data.items.find((i: { id: string }) => i.id === recordId)).toBeUndefined();
+    expect(listRes.body.data.find((i: { id: string }) => i.id === recordId)).toBeUndefined();
   });
 
   it('should reject access to another user\'s pet weight (403)', async () => {
@@ -119,7 +122,27 @@ describe('Weight Module', () => {
     const postRes = await request(app)
       .post(`/api/pets/${pet1}/weight`)
       .set('Authorization', `Bearer ${token2}`)
-      .send({ weightKg: 15, date: new Date().toISOString() });
+      .send({ weightKg: 15, recordedAt: new Date().toISOString() });
     expect(postRes.status).toBe(403);
+  });
+
+  it('should return 404 for missing pet', async () => {
+    const fakePetId = '00000000-0000-0000-0000-000000000000';
+    const res = await request(app)
+      .get(`/api/pets/${fakePetId}/weight`)
+      .set('Authorization', `Bearer ${token1}`);
+    
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NOT_FOUND');
+  });
+
+  it('should return 404 for missing weight record', async () => {
+    const fakeRecordId = '00000000-0000-0000-0000-000000000000';
+    const res = await request(app)
+      .delete(`/api/pets/${pet1}/weight/${fakeRecordId}`)
+      .set('Authorization', `Bearer ${token1}`);
+    
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NOT_FOUND');
   });
 });

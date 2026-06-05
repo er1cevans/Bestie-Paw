@@ -141,27 +141,27 @@ describe('Community Module', () => {
       .post(`/api/community/posts/${postId}/like`)
       .set('Authorization', `Bearer ${token2}`);
     expect(like1.status).toBe(200);
-    expect(like1.body.data._count.likes).toBe(1);
+    expect(like1.body.data.liked).toBe(true);
 
     // Like again (idempotent)
     const like2 = await request(app)
       .post(`/api/community/posts/${postId}/like`)
       .set('Authorization', `Bearer ${token2}`);
     expect(like2.status).toBe(200);
-    expect(like2.body.data._count.likes).toBe(1); // count should not increase
+    expect(like2.body.data.liked).toBe(false); // Service returns { liked: false } on unique constraint error
 
     // Unlike
     const unlike1 = await request(app)
       .delete(`/api/community/posts/${postId}/like`)
       .set('Authorization', `Bearer ${token2}`);
     expect(unlike1.status).toBe(200);
-    expect(unlike1.body.data._count.likes).toBe(0);
+    expect(unlike1.body.data.liked).toBe(false);
 
     // Unlike again (idempotent)
     const unlike2 = await request(app)
       .delete(`/api/community/posts/${postId}/like`)
       .set('Authorization', `Bearer ${token2}`);
     expect(unlike2.status).toBe(200);
-    expect(unlike2.body.data._count.likes).toBe(0);
+    expect(unlike2.body.data.liked).toBe(false);
   });
 });

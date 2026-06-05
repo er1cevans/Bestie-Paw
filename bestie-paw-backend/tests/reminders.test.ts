@@ -125,7 +125,7 @@ describe('Reminders Module — ownership / IDOR', () => {
     
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
-    expect(res.body.error.code).toBe('VALIDATION');
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
 
   it('owner can complete a reminder and filter list by includeCompleted', async () => {
@@ -139,7 +139,7 @@ describe('Reminders Module — ownership / IDOR', () => {
 
     // Complete the reminder
     const compRes = await request(app)
-      .patch(`/api/pets/${pet1}/reminders/${id}/complete`)
+      .post(`/api/pets/${pet1}/reminders/${id}/complete`)
       .set('Authorization', `Bearer ${token1}`);
     expect(compRes.status).toBe(200);
     expect(compRes.body.data.completed).toBe(true);

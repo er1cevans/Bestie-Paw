@@ -90,7 +90,10 @@ jobs:
           # each run avoids the poison; re-add caching later with a bumped key.
 
       - name: Install dependencies (workspace)
-        run: pnpm install --frozen-lockfile
+        run: |
+          echo "pnpm: $(pnpm --version)"
+          echo "onlyBuiltDependencies => $(pnpm config get onlyBuiltDependencies || echo 'ERR')"
+          pnpm install --frozen-lockfile
 
       - name: Type Check (frontend)
         run: pnpm --filter bestie-paw-frontend run typecheck

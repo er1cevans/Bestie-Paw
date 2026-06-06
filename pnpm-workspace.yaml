@@ -1,0 +1,4 @@
+packages:
+  - 'bestie-paw-backend'
+  - 'bestie-paw-frontend'
+  - 'packages/*'

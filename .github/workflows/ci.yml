@@ -82,7 +82,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22 # pnpm 11.5.2 requires Node >= 22.13
-          cache: 'pnpm'
+          # NOTE: deliberately no `cache: 'pnpm'`. The setup-node pnpm store
+          # cache caches built package artifacts keyed by lockfile hash; a store
+          # populated before `onlyBuiltDependencies` was set keeps esbuild/prisma
+          # marked as ignored-builds, so frozen installs fail with
+          # ERR_PNPM_IGNORED_BUILDS even after the config is added. Fresh store
+          # each run avoids the poison; re-add caching later with a bumped key.
 
       - name: Install dependencies (workspace)
         run: pnpm install --frozen-lockfile

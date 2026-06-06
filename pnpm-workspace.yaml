@@ -2,3 +2,11 @@ packages:
   - 'bestie-paw-backend'
   - 'bestie-paw-frontend'
   - 'packages/*'
+
+# Allow these dependencies to run install/build scripts (pnpm 10+ blocks by default).
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - bcrypt
+  - esbuild
+  - prisma

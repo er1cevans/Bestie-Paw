@@ -11,22 +11,41 @@ export type ApiSuccess<T> = {
   data: T;
 };
 
+// ErrorCode — verified against the real backend, not API_CONTRACTS.md §6 (which is stale).
+// Sources: src/middleware/errorHandler.ts (Zod/Prisma/JWT/multer/fallback) + every
+// `new AppError('CODE', ...)` across src/modules/** + frontend-synthetic codes in app/services.jsx.
 export type ErrorCode =
-  | 'VALIDATION_ERROR'
-  | 'VALIDATION'
+  // errorHandler.ts non-AppError branches
+  | 'VALIDATION_ERROR' // ZodError (the real validation code; NOT 'VALIDATION')
+  | 'CONFLICT' // Prisma P2002 (also thrown explicitly)
+  | 'UNAUTHORIZED' // JsonWebTokenError (also thrown explicitly)
+  | 'UPLOAD_ERROR' // multer.MulterError
+  | 'UNSUPPORTED_FILE_TYPE'
+  | 'INTERNAL_ERROR' // 500 fallback (NOT 'INTERNAL_SERVER_ERROR')
+  // AppError codes thrown in src/modules/**
   | 'NOT_FOUND'
   | 'FORBIDDEN'
-  | 'UNAUTHORIZED'
-  | 'CONFLICT'
+  | 'INVALID_CREDENTIALS'
+  | 'INVALID_REFRESH_TOKEN'
+  | 'INVALID_CODE'
+  | 'CODE_EXPIRED'
+  | 'EMAIL_NOT_VERIFIED'
+  | 'ACCOUNT_LOCKED'
+  | 'PHONE_TAKEN'
+  | 'ATTACHMENT_LIMIT'
+  // frontend-synthetic (app/services.jsx) — shared package also serves the frontend
   | 'NETWORK_ERROR'
-  | 'INTERNAL_SERVER_ERROR';
+  | 'ERROR';
 
 export type ApiError = {
   success: false;
   error: {
     code: ErrorCode;
     message: string;
-    fields?: Record<string, string>;
+    // some AppErrors carry an `action` hint (errorHandler.ts passes it through)
+    action?: string;
+    // present on validation errors (ZodError flatten().fieldErrors)
+    fields?: Record<string, string[]>;
   };
 };
 

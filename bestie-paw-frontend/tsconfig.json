@@ -21,6 +21,6 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["app", "tests", "*.ts", "*.tsx", "*.jsx"],
+  "include": ["src", "app", "tests", "*.ts", "*.tsx", "*.jsx"],
   "exclude": ["node_modules"]
 }

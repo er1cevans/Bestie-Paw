@@ -84,11 +84,13 @@ jobs:
           node-version: 22 # pnpm 11.5.2 requires Node >= 22.13
 
       - name: Install dependencies (workspace)
-        # Native postinstall scripts (esbuild/prisma/bcrypt) are blocked by this
-        # CI's supply-chain layer; pnpm-workspace.yaml lists them under
-        # ignoredBuiltDependencies so the install doesn't fail. The frontend
-        # build doesn't need them (esbuild resolves its platform binary at runtime).
-        run: pnpm install --frozen-lockfile
+        # --ignore-scripts: this CI's supply-chain layer blocks dependency
+        # postinstall/build scripts (esbuild/prisma/bcrypt), which otherwise makes
+        # the install fail with ERR_PNPM_IGNORED_BUILDS regardless of
+        # only/ignoredBuiltDependencies config. The frontend build doesn't need
+        # those native builds — esbuild resolves its platform binary at runtime —
+        # so skipping all dep scripts is safe here.
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Type Check (frontend)
         run: pnpm --filter bestie-paw-frontend run typecheck

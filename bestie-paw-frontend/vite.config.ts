@@ -25,8 +25,13 @@ function stitchPlugin() {
         ];
         
         let content = `import React, { useState, useEffect, useContext, createContext, useMemo, useCallback, useRef, Fragment, Suspense } from 'react';\n`;
-        content += `import ReactDOM from 'react-dom/client';\n\n`;
-        
+        // createRoot lives in 'react-dom/client'; createPortal lives in 'react-dom'.
+        // The stitched views reference `ReactDOM.createRoot` (mount) and `ReactDOM.createPortal` (BPModal),
+        // so the single `ReactDOM` binding must expose both.
+        content += `import ReactDOMClient from 'react-dom/client';\n`;
+        content += `import { createPortal } from 'react-dom';\n`;
+        content += `const ReactDOM = Object.assign({}, ReactDOMClient, { createPortal });\n\n`;
+
         content += `window.React = React;\n`;
         content += `window.ReactDOM = ReactDOM;\n\n`;
         

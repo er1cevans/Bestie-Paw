@@ -25,11 +25,15 @@ const sanitizeUser = (user: {
   id: string;
   username: string;
   email: string;
+  phone: string | null;
+  avatarUrl: string | null;
   emailVerified: boolean;
 }) => ({
   id: user.id,
   username: user.username,
   email: user.email,
+  phone: user.phone,
+  avatarUrl: user.avatarUrl,
   emailVerified: user.emailVerified
 });
 

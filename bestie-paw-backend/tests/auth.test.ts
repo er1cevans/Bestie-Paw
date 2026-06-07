@@ -30,6 +30,10 @@ describe('Auth Module Integration Tests', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.user).toBeDefined();
     expect(res.body.data.user.email).toBe(registerPayload.email);
+    // auth response user shape must match GET /users/me + shared User DTO
+    expect(res.body.data.user.phone).toBe(registerPayload.phone);
+    expect(res.body.data.user).toHaveProperty('avatarUrl', null);
+    expect(res.body.data.user).not.toHaveProperty('passwordHash');
   });
 
   it('should fail to register with duplicate email', async () => {

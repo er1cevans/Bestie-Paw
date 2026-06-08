@@ -49,7 +49,7 @@ function buildWelcomeEmail(username: string, petName: string): string {
       <ul>
         <li>记录疫苗接种和体检报告</li>
         <li>设置用药和复诊提醒</li>
-        <li>在社区与其他宠物主交流</li>
+        <li>阅读养宠好文，学习科学养宠知识</li>
       </ul>
       <a href="${env.FRONTEND_URL}"
          style="display:inline-block;margin-top:1rem;padding:0.75rem 1.5rem;

@@ -10,7 +10,7 @@ module.exports = {
     'src/modules/auth/**/*.ts',
     'src/modules/pets/**/*.ts',
     'src/modules/health/**/*.ts',
-    'src/modules/community/**/*.ts',
+    'src/modules/articles/**/*.ts',
     'src/modules/users/**/*.ts',
     'src/modules/weight/**/*.ts',
     'src/modules/reminders/**/*.ts',

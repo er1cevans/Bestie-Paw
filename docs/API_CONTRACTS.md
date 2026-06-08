@@ -26,8 +26,9 @@
 - 改密码 / 注销会**吊销所有会话**。
 
 ## 4. 枚举大小写（历史踩坑点）
-- 后端 Prisma 枚举为**大写**：`PetType`、`Gender`、`NeuteredStatus`、`HealthRecordType`、`ReminderType`。
+- 后端 Prisma 枚举为**大写**：`Role`、`PetType`、`Gender`、`NeuteredStatus`、`HealthRecordType`、`ReminderType`。
 - 约定：**线缆上传输大写**。前端适配层发送时转大写、接收时转小写。新端点的枚举字段一律遵循此约定。
+- `Role`（`USER` / `ADMIN`）：随 `User` DTO 下发（登录/注册/`GET /users/me`），前端据此识别"维护者"。养宠好文（articles）的增删改走 ADMIN 门禁（`requireAdmin`，403 复用 `FORBIDDEN`，无新增错误码）。
 
 ## 5. 分页信封
 - **唯一字段名为 `items`**：所有列表端点统一返回 `{ items, total, page, limit }`。

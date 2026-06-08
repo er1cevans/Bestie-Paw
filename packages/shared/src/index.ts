@@ -1,4 +1,5 @@
 // Enums
+export type Role = 'USER' | 'ADMIN';
 export type PetType = 'DOG' | 'CAT' | 'RABBIT' | 'BIRD' | 'FISH' | 'OTHER';
 export type Gender = 'MALE' | 'FEMALE' | 'UNKNOWN';
 export type NeuteredStatus = 'YES' | 'NO' | 'UNKNOWN';
@@ -63,6 +64,7 @@ export type User = {
   email: string;
   phone: string | null;
   avatarUrl: string | null;
+  role: Role;
   emailVerified: boolean;
 };
 
@@ -118,20 +120,21 @@ export type Reminder = {
   createdAt: string;
 };
 
-export type Post = {
+export type Article = {
   id: string;
-  authorId: string;
+  title: string;
+  summary: string | null;
   content: string;
-  images: string[];
+  coverImageUrl: string | null;
+  authorName: string;
+  category: string | null;
+  published: boolean;
+  publishedAt: string | null;
   likes: number;
   createdAt: string;
   updatedAt: string;
-};
-
-export type Comment = {
-  id: string;
-  postId: string;
-  authorId: string;
-  content: string;
-  createdAt: string;
+  // Response enhancements: present on the user-facing read endpoints
+  // (list / detail / favorites), reflecting the current user's state.
+  liked?: boolean;
+  favorited?: boolean;
 };

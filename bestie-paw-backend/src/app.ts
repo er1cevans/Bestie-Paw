@@ -12,7 +12,7 @@ import petsRoutes from './modules/pets/pets.routes';
 import healthRoutes from './modules/health/health.routes';
 import remindersRoutes from './modules/reminders/reminders.routes';
 import weightRoutes from './modules/weight/weight.routes';
-import communityRoutes from './modules/community/community.routes';
+import articlesRoutes from './modules/articles/articles.routes';
 import statsRoutes from './modules/stats/stats.routes';
 
 const app = express();
@@ -41,7 +41,7 @@ app.use('/api/pets', petsRoutes);
 app.use('/api/pets/:petId/health', healthRoutes);
 app.use('/api/pets/:petId/reminders', remindersRoutes);
 app.use('/api/pets/:petId/weight', weightRoutes);
-app.use('/api/community', communityRoutes);
+app.use('/api/articles', articlesRoutes);
 app.use('/api/stats', statsRoutes);
 
 app.use(errorHandler);

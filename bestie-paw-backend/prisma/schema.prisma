@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id                            String         @id @default(cuid())
   username                      String         @unique
@@ -14,6 +19,7 @@ model User {
   phone                         String?        @unique
   passwordHash                  String
   avatarUrl                     String?
+  role                          Role           @default(USER)
   emailVerified                 Boolean        @default(false)
   emailVerificationCodeHash     String?
   emailVerificationExpiresAt    DateTime?
@@ -25,11 +31,10 @@ model User {
   createdAt                     DateTime       @default(now())
   updatedAt                     DateTime       @updatedAt
 
-  pets          Pet[]
-  posts         Post[]
-  refreshTokens RefreshToken[]
-  postLikes     PostLike[]
-  comments      Comment[]
+  pets             Pet[]
+  refreshTokens    RefreshToken[]
+  articleLikes     ArticleLike[]
+  articleFavorites ArticleFavorite[]
 }
 
 model RefreshToken {
@@ -141,45 +146,50 @@ enum ReminderType {
   OTHER
 }
 
-model Post {
-  id        String      @id @default(cuid())
-  authorId  String
-  content   String
-  images    String[]    @default([])
-  likes     Int         @default(0)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+model Article {
+  id            String    @id @default(cuid())
+  title         String
+  summary       String?
+  content       String
+  coverImageUrl String?
+  authorName    String
+  category      String?
+  published     Boolean   @default(true)
+  publishedAt   DateTime?
+  likes         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  comments  Comment[]
-  postLikes PostLike[]
+  articleLikes     ArticleLike[]
+  articleFavorites ArticleFavorite[]
 
-  @@index([createdAt])
+  @@index([published, createdAt])
 }
 
-model PostLike {
+model ArticleLike {
   id        String   @id @default(cuid())
-  postId    String
+  articleId String
   userId    String
   createdAt DateTime @default(now())
 
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([postId, userId])
+  @@unique([articleId, userId])
+  @@index([userId])
 }
 
-model Comment {
+model ArticleFavorite {
   id        String   @id @default(cuid())
-  postId    String
-  authorId  String
-  content   String
+  articleId String
+  userId    String
   createdAt DateTime @default(now())
 
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([postId])
+  @@unique([articleId, userId])
+  @@index([userId])
 }
 
 model WeightRecord {

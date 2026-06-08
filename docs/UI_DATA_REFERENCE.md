@@ -12,7 +12,7 @@
 
 ### 1.1 三态：每个数据界面都要设计 加载 / 空 / 错误
 - **加载（loading）**：请求进行中。列表/详情/仪表盘都需要骨架屏或 loading 态。
-- **空（empty）**：请求成功但无数据（如还没有宠物、没有健康记录、社区无帖子）。**空态需要专门的插画 + 引导文案 + 主行动按钮**。
+- **空（empty）**：请求成功但无数据（如还没有宠物、没有健康记录、还没有收藏任何养宠好文）。**空态需要专门的插画 + 引导文案 + 主行动按钮**。
 - **错误（error）**：见 §7 错误码→UI 映射。区分"字段级校验错误"（表单内联红字）与"整页/操作失败"（toast 或错误占位）。
 
 ### 1.2 鉴权与会话（影响导航与守卫）
@@ -23,14 +23,14 @@
 
 ### 1.3 分页（列表界面）
 - 列表统一返回 `{ items, total, page, limit }`，参数 `page`、`limit`。
-- 健康记录、社区帖子是分页列表 → 设计需考虑**翻页 / 无限滚动 / "加载更多"**其一，以及 `total` 计数展示。
+- 健康记录、养宠好文（列表 + 我的收藏）是分页列表 → 设计需考虑**翻页 / 无限滚动 / "加载更多"**其一，以及 `total` 计数展示。
 
 ### 1.4 时间
 - 所有时间是 ISO-8601 UTC 字符串 → 前端按本地时区显示。设计需定"相对时间（3 天前）"还是"绝对日期"。
 - **提醒 `dueDate` 必须是将来时间**（创建/编辑时过去时间会被拒）→ 日期选择器需禁用过去。
 
 ### 1.5 图片与上传
-- 头像（用户、宠物）、健康记录附件、社区帖子配图都涉及上传。
+- 头像（用户、宠物）、健康记录附件涉及**用户上传**。养宠好文的封面图（`coverImageUrl`）由维护者在发布时提供，普通用户不上传。
 - 健康记录**单条最多 20 个附件**（超出报错）→ 设计需有"已用 N/20"与达上限禁用态。
 - 上传可能失败（类型不支持 / 体积过大）→ 需上传失败态。
 
@@ -48,6 +48,7 @@
 | `email` | string | |
 | `phone` | string? | 11 位数字，可空 |
 | `avatarUrl` | string? | 头像，可空 → 需默认头像 |
+| `role` | Role | `USER` / `ADMIN`；`ADMIN`=维护者，可发布/编辑/删除养宠好文。普通用户界面不应出现内容管理入口 |
 | `emailVerified` | boolean | 未验证邮箱影响登录（见 §7） |
 
 ### Pet（宠物）
@@ -95,20 +96,23 @@
 | `completedAt` | string? | 有值=已完成（默认列表隐藏） |
 | `notified` | boolean | 是否已发提醒（系统用） |
 
-### Post（社区帖子）
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` / `authorId` | string | |
-| `content` | string | ≤2000 字 |
-| `images` | string[] | 配图 |
-| `likes` | number | 点赞数 |
-| 详情附带 | comments[] + author | 详情接口返回作者信息和评论 |
+### Article（养宠好文）
+> 维护者（ADMIN）发布的科普文章；用户**只读 + 点赞 + 收藏**，不发帖、不评论。
 
-### Comment（评论）
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `id` / `postId` / `authorId` | string | |
-| `content` | string | ≤500 字 |
+| `id` | string | |
+| `title` | string | 标题，必填，≤200 字 |
+| `summary` | string? | 摘要/导语，≤500 字，可空 |
+| `content` | string | 正文，必填 |
+| `coverImageUrl` | string? | 封面图 URL，可空 → 需默认占位 |
+| `authorName` | string | 作者署名（文本，非账号），≤100 字 |
+| `category` | string? | 分类标签（如"狗狗/猫咪/健康/营养"），≤50 字，可空 → 可做筛选 |
+| `published` | boolean | 是否已发布（草稿对普通用户不可见） |
+| `publishedAt` | string? (date) | 发布时间，可空 |
+| `likes` | number | 点赞总数 |
+| `liked` | boolean | **响应增强**：当前用户是否已点赞（列表/详情/收藏接口附带） |
+| `favorited` | boolean | **响应增强**：当前用户是否已收藏（同上） |
 
 ---
 
@@ -160,11 +164,14 @@
 - `GET /pets/:petId/reminders?upcoming=&includeCompleted=`（默认隐藏已完成）；`POST` 新增（**dueDate 必须将来**）；`PATCH` 改；`.../complete` 完成；`DELETE` 删。
 - 设计：即将到期/已完成分组、完成勾选交互、按类型图标、日期选择器禁用过去、空态。
 
-### 5.6 社区 Community（`/app/community`）
-- 列表 `GET /community/posts?page=&limit=`（**分页**）；详情 `GET /community/posts/:id`（含作者 + 评论，评论按时间正序）；发帖 `POST`（content ≤2000、可带图）；删帖（仅作者）。
-- 点赞/取消 `POST|DELETE /community/posts/:id/like`（**幂等**）→ 设计需乐观更新的点赞态。
-- 评论 `POST .../comments`（≤500）、删评论（仅作者）。
-- 设计：信息流卡片、发帖编辑器（字数计数 + 配图）、详情+评论、点赞动效、空态、"仅作者可删"的权限态。
+### 5.6 养宠好文 Articles（`/app/articles`）
+> 内容由维护者（ADMIN）发布，普通用户**只读 + 点赞 + 收藏**，**无发帖、无评论**。
+
+- 列表 `GET /articles?category=&page=&limit=`（**分页**，仅已发布，按时间倒序，可按 `category` 筛选）；详情 `GET /articles/:id`。列表/详情每条附 `liked`/`favorited`（当前用户状态）。
+- 点赞/取消 `POST|DELETE /articles/:id/like`（**幂等**，返回 `{ liked, likes }`）→ 设计需乐观更新的点赞态与点赞数。
+- 收藏/取消 `POST|DELETE /articles/:id/favorite`（**幂等**，返回 `{ favorited }`）；我的收藏 `GET /articles/favorites`（**分页**，按收藏时间倒序）。
+- 设计：文章信息流卡片（封面图 + 标题 + 摘要 + 分类标签 + 点赞/收藏）、阅读详情页（正文 + 作者署名 + 发布时间）、按分类筛选、点赞/收藏动效、"我的收藏"列表、空态。
+- **维护者视角（ADMIN）**：发布/编辑/删除文章（`POST/PATCH/DELETE /articles`，字段见 §2 Article），可查看未发布草稿（列表 `?includeUnpublished=true`、按 id 直达）。普通用户界面**不出现**任何内容管理入口（按 `user.role` 区分）。
 
 ### 5.7 个人资料 Profile（`/app/profile`）
 - `GET /users/me`；`PATCH /users/me`（改用户名/手机号，手机号唯一→冲突 `409`）；`POST /users/me/avatar`；`POST /users/me/password`（改密码→登出所有会话）；`DELETE /users/me`（**软删除账号**，需强二次确认）。
@@ -180,6 +187,7 @@
 
 | 枚举 | 取值（英文=契约） | 参考中文 |
 |---|---|---|
+| **Role** | USER / ADMIN | 普通用户 / 维护者（可发布养宠好文） |
 | **PetType** | DOG / CAT / RABBIT / BIRD / FISH / OTHER | 狗 / 猫 / 兔 / 鸟 / 鱼 / 其它 |
 | **Gender** | MALE / FEMALE / UNKNOWN | 公 / 母 / 未知 |
 | **NeuteredStatus** | YES / NO / UNKNOWN | 已绝育 / 未绝育 / 未知 |
@@ -200,7 +208,7 @@
 | `ACCOUNT_LOCKED` | 登录失败过多 | 锁定提示 + 稍后重试/找回密码 |
 | `CONFLICT` / `PHONE_TAKEN` | 邮箱/用户名/手机号重复 | 对应字段内联"已被占用" |
 | `INVALID_CODE` / `CODE_EXPIRED` | 验证码错/过期 | 验证码输入框提示 + 重发 |
-| `FORBIDDEN` | 操作他人资源（如删别人帖子） | 隐藏入口为主；兜底 toast |
+| `FORBIDDEN` | 无权操作（如普通用户尝试发布/编辑/删除养宠好文，属维护者 ADMIN 权限） | 隐藏入口为主；兜底 toast |
 | `NOT_FOUND` | 资源不存在/已删 | 详情页"内容不存在"占位 |
 | `ATTACHMENT_LIMIT` | 附件超 20 | 达上限禁用上传 + 提示 |
 | `UPLOAD_ERROR` / `UNSUPPORTED_FILE_TYPE` | 上传失败/类型不支持 | 上传组件错误态 |
@@ -213,17 +221,17 @@
 
 当前前端路由（说明已实现的功能边界，**不是**最终导航设计）：
 - 公开：`/`（落地）、`/login`、`/register`、`/pet-profile`（建档）、`/complete`（完成）
-- 应用（登录后，带导航壳）：`/app`（仪表盘）、`/app/health`、`/app/reminders`、`/app/community`、`/app/profile`、`/app/ai`（第三方 AI，可选）
+- 应用（登录后，带导航壳）：`/app`（仪表盘）、`/app/health`、`/app/reminders`、`/app/articles`（养宠好文，原社区位置）、`/app/profile`、`/app/ai`（第三方 AI，可选）
 - 响应式：现有实现桌面侧边栏 + 移动底部导航。
 
 ---
 
 ## 9. 给设计者的落点清单（建议交付物）
 为推进前端 Phase 2 的 (b) 段（UI 耦合迁移），设计侧理想产出：
-1. 信息架构 / 导航 与关键流程（注册→建档→仪表盘、加健康记录、设提醒、发帖）。
+1. 信息架构 / 导航 与关键流程（注册→建档→仪表盘、加健康记录、设提醒、浏览养宠好文+点赞收藏；维护者侧的文章发布/编辑）。
 2. 设计 token（色板、字体阶、间距、圆角、阴影）——会取代现有散落在 `index.html` `:root` 的变量。
 3. 每个枚举的标签/图标/配色（§6）。
 4. 三态规范（§1.1）：空态插画+文案、错误态、加载骨架。
-5. 关键界面高保真：仪表盘、宠物档案、健康记录（列表+详情+附件）、体重趋势、提醒、社区（流+详情+发帖）、个人资料、认证组。
+5. 关键界面高保真：仪表盘、宠物档案、健康记录（列表+详情+附件）、体重趋势、提醒、养宠好文（列表+详情+收藏，维护者侧发布/编辑）、个人资料、认证组。
 
 > 设计确定后，工程侧按 ADR 0001 的 (b) 段把 6 个视图 `.jsx→.tsx`、补组件测试、落地设计 token。本数据契约在 UI 重做后依然有效。

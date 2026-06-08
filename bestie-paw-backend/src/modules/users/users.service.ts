@@ -1,3 +1,4 @@
+import { Role } from '@prisma/client';
 import { prisma } from '../../utils/prisma';
 import { AppError } from '../../middleware/errorHandler';
 import { compareValue, hashValue } from '../../utils/hash';
@@ -9,6 +10,7 @@ const sanitizeUser = (user: {
   email: string;
   phone: string | null;
   avatarUrl: string | null;
+  role: Role;
   emailVerified: boolean;
 }) => ({
   id: user.id,
@@ -16,6 +18,7 @@ const sanitizeUser = (user: {
   email: user.email,
   phone: user.phone,
   avatarUrl: user.avatarUrl,
+  role: user.role,
   emailVerified: user.emailVerified
 });
 

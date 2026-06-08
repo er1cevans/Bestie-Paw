@@ -48,12 +48,21 @@ Base URL: /api
 - POST /pets/:petId/reminders/:reminderId/complete — Mark reminder as completed.
 - DELETE /pets/:petId/reminders/:reminderId — Delete reminder.
 
-## Community (Auth)
-- GET /community/posts — List posts (page, limit). Returns { items, total, page, limit }.
-- POST /community/posts — Create post with images (content ≤ 2000 chars).
-- GET /community/posts/:postId — Get post with comments (oldest first, each with author info).
-- DELETE /community/posts/:postId — Delete post (author only).
-- POST /community/posts/:postId/like — Like a post (idempotent).
-- DELETE /community/posts/:postId/like — Unlike a post (idempotent).
-- POST /community/posts/:postId/comments — Add comment (content ≤ 500 chars).
-- DELETE /community/posts/:postId/comments/:commentId — Delete comment (author only).
+## Articles 养宠好文 (Auth)
+> Reading + liking + favoriting are open to any signed-in user. Creating / editing / deleting articles is **ADMIN only** (maintainer), enforced by `requireAdmin` (role read from DB). No comments.
+
+### User (any signed-in USER/ADMIN)
+- GET /articles — List **published** articles (`?category=&page=&limit=`), newest first. Returns { items, total, page, limit }; each item carries the current user's `liked` and `favorited` booleans.
+- GET /articles/favorites — List the current user's favorited articles, newest favorite first (`?page=&limit=`). Same envelope; items carry `liked`/`favorited`.
+- GET /articles/:id — Get a single article (published only; an unpublished draft is 404 for regular users). Carries `liked`/`favorited`.
+- POST /articles/:id/like — Like an article (idempotent). Returns { liked: true, likes: <new count> }.
+- DELETE /articles/:id/like — Unlike an article (idempotent). Returns { liked: false, likes: <new count> }.
+- POST /articles/:id/favorite — Favorite an article (idempotent). Returns { favorited: true }.
+- DELETE /articles/:id/favorite — Remove from favorites (idempotent). Returns { favorited: false }.
+
+### Maintainer (ADMIN)
+- GET /articles?includeUnpublished=true — List incl. unpublished drafts (the flag only takes effect for ADMIN; ignored otherwise).
+- GET /articles/:id — ADMIN may fetch an unpublished draft by id.
+- POST /articles — Create. Body: { title, content, summary?, coverImageUrl?, authorName, category?, published? }. Returns the Article.
+- PATCH /articles/:id — Update (all of the above fields optional). Returns the Article.
+- DELETE /articles/:id — Delete (cascades likes/favorites).

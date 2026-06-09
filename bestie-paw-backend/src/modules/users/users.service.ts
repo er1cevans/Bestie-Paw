@@ -1,26 +1,8 @@
-import { Role } from '@prisma/client';
 import { prisma } from '../../utils/prisma';
 import { AppError } from '../../middleware/errorHandler';
 import { compareValue, hashValue } from '../../utils/hash';
 import { deleteUploadedFile } from '../../middleware/upload';
-
-const sanitizeUser = (user: {
-  id: string;
-  username: string;
-  email: string;
-  phone: string | null;
-  avatarUrl: string | null;
-  role: Role;
-  emailVerified: boolean;
-}) => ({
-  id: user.id,
-  username: user.username,
-  email: user.email,
-  phone: user.phone,
-  avatarUrl: user.avatarUrl,
-  role: user.role,
-  emailVerified: user.emailVerified
-});
+import { sanitizeUser } from '../../utils/sanitizeUser';
 
 export const getCurrentUser = async (userId: string) => {
   const user = await prisma.user.findFirst({

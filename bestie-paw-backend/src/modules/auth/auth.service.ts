@@ -1,4 +1,3 @@
-import { Role } from '@prisma/client';
 import { prisma } from '../../utils/prisma';
 import { hashValue, compareValue } from '../../utils/hash';
 import {
@@ -12,6 +11,7 @@ import {
 import { emailEnabled, sendPasswordResetEmail, sendVerificationEmail } from '../../utils/mailer';
 import { AppError } from '../../middleware/errorHandler';
 import { env } from '../../config/env';
+import { sanitizeUser } from '../../utils/sanitizeUser';
 import type {
   LoginInput,
   RegisterInput,
@@ -21,24 +21,6 @@ import type {
 
 const generateVerificationCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
-
-const sanitizeUser = (user: {
-  id: string;
-  username: string;
-  email: string;
-  phone: string | null;
-  avatarUrl: string | null;
-  role: Role;
-  emailVerified: boolean;
-}) => ({
-  id: user.id,
-  username: user.username,
-  email: user.email,
-  phone: user.phone,
-  avatarUrl: user.avatarUrl,
-  role: user.role,
-  emailVerified: user.emailVerified
-});
 
 const storeRefreshToken = async (userId: string, token: string) => {
   const tokenHash = await hashValue(token);

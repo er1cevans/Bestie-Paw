@@ -1,17 +1,7 @@
 import { prisma } from '../../utils/prisma';
 import { AppError } from '../../middleware/errorHandler';
+import { assertPetOwnership } from '../../utils/petOwnership';
 import type { WeightCreateInput } from './weight.schema';
-
-const assertPetOwnership = async (userId: string, petId: string) => {
-  const pet = await prisma.pet.findUnique({ where: { id: petId } });
-  if (!pet) {
-    throw new AppError('NOT_FOUND', 'Pet not found', 404);
-  }
-  if (pet.ownerId !== userId) {
-    throw new AppError('FORBIDDEN', 'Not allowed', 403);
-  }
-  return pet;
-};
 
 export const listWeightRecords = async (userId: string, petId: string, limit = 50) => {
   await assertPetOwnership(userId, petId);
